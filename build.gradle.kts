@@ -26,9 +26,9 @@ repositories {
 val shade = configureJarInJar()
 
 dependencies {
-    implementation("com.viaversion:viafabricplus:5.0.1")
+    implementation("com.viaversion:viafabricplus:5.0.2")
 
-    shade("net.raphimc:ViaBedrock:0.0.30-20260908.182032-2") {
+    shade("net.raphimc:ViaBedrock:0.0.31-SNAPSHOT") {
         exclude(group = "com.mojang", module = "brigadier")
         exclude(group = "at.yawk.lz4", module = "lz4-java")
         exclude(group = "io.netty")
