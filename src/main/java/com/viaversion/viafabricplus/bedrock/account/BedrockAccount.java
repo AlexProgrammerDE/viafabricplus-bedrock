@@ -21,18 +21,19 @@
 
 package com.viaversion.viafabricplus.bedrock.account;
 
+import com.mojang.blaze3d.Blaze3D;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.injection.access.IConfirmScreen;
 import com.viaversion.viafabricplus.bedrock.screen.BedrockRealmsScreen;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.util.JsonSave;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Util;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.msa.model.MsaDeviceCode;
@@ -88,7 +89,7 @@ public final class BedrockAccount {
                             this.thread.interrupt();
                         }
                     }, TITLE, Component.translatable("bedrock_account.viafabricplus.notice"), Component.translatable("base.viafabricplus.copy_link"), Component.translatable("base.viafabricplus.cancel")));
-                    Util.getPlatform().openUri(deviceCode.getDirectVerificationUri());
+                    Blaze3D.openUri(URI.create(deviceCode.getDirectVerificationUri()));
                 });
             account.getChangeListeners().add(new ChangeListener() {
                 @Override

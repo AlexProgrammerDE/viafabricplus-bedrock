@@ -35,20 +35,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(EntityFluidInteraction.Tracker.class)
-public abstract class MixinEntityFluidInteraction_Tracker {
+@Mixin(EntityFluidInteraction.CurrentAccumulator.class)
+public abstract class MixinEntityFluidInteraction_CurrentAccumulator {
 
     // Bedrock normalizes the accumulated current for players as well
     @Definition(id = "entity", local = @Local(type = Entity.class, argsOnly = true))
     @Definition(id = "Player", type = Player.class)
     @Expression("entity instanceof Player")
-    @ModifyExpressionValue(method = "applyCurrentTo", at = @At("MIXINEXTRAS:EXPRESSION"))
+    @ModifyExpressionValue(method = "applyTo", at = @At("MIXINEXTRAS:EXPRESSION"))
     private boolean normalizeInsteadScale(final boolean original) {
         return !ViaFabricPlus.api().targetVersion().equals(BedrockProtocolVersion.bedrockLatest) && original;
     }
 
     // Dropping the threshold skips the boost small currents would get
-    @ModifyConstant(method = "applyCurrentTo", constant = @Constant(doubleValue = 0.0045000000000000005, ordinal = 0))
+    @ModifyConstant(method = "applyTo", constant = @Constant(doubleValue = 0.0045000000000000005, ordinal = 0))
     private double dontScaleSmallValues(final double constant) {
         if (ViaFabricPlus.api().targetVersion().equals(BedrockProtocolVersion.bedrockLatest)) {
             return -1;

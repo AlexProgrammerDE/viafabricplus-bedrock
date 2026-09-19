@@ -47,7 +47,7 @@
     "features.misc.MixinMinecraft",
     "features.movement.MixinEntity",
     "features.movement.MixinEntityFluidInteraction",
-    "features.movement.MixinEntityFluidInteraction_Tracker",
+    "features.movement.MixinEntityFluidInteraction_CurrentAccumulator",
     "features.movement.MixinHoneyBlock",
     "features.movement.MixinLivingEntity",
     "features.movement.MixinLocalPlayer",
