@@ -62,7 +62,7 @@ public final class BedrockRealmTimelineService {
                     .build();
                 final HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                    throw new IOException("Realm Timeline opt-in failed: HTTP " + response.statusCode());
+                    throw responseError("Realm Timeline opt-in", response);
                 }
                 if (!isOptedInNow(account, realmId)) {
                     throw new IOException("Realm Timeline opt-in was not saved");
@@ -76,13 +76,26 @@ public final class BedrockRealmTimelineService {
     private static boolean isOptedInNow(final BedrockAuthManager account, final long realmId) throws IOException, InterruptedException {
         final HttpResponse<String> response = HTTP.send(request(account, realmId).GET().build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            throw new IOException("Realm Timeline settings failed: HTTP " + response.statusCode());
+            throw responseError("Realm Timeline settings", response);
         }
         final JsonObject settings = JsonParser.parseString(response.body()).getAsJsonObject();
         if (!settings.has("playerOptIn") || !settings.get("playerOptIn").isJsonPrimitive()) {
             throw new IOException("Realm Timeline settings have no player opt-in state");
         }
         return "OPT_IN".equals(settings.get("playerOptIn").getAsString());
+    }
+
+    private static IOException responseError(final String operation, final HttpResponse<String> response) {
+        try {
+            final JsonObject body = JsonParser.parseString(response.body()).getAsJsonObject();
+            if (body.has("errorCode") && body.has("errorMsg")) {
+                return new IOException(operation + " failed: " + body.get("errorMsg").getAsString()
+                    + " (code " + body.get("errorCode").getAsInt() + ")");
+            }
+        } catch (RuntimeException ignored) {
+            // Realms does not return JSON for every HTTP error.
+        }
+        return new IOException(operation + " failed: HTTP " + response.statusCode());
     }
 
     private static HttpRequest.Builder request(final BedrockAuthManager account, final long realmId) throws IOException {

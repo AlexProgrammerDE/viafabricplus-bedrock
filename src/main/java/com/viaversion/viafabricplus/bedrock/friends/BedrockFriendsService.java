@@ -136,7 +136,7 @@ public final class BedrockFriendsService {
                 final URI handle = DIRECTORY.resolve("handles/" + UUID.fromString(world.handleId()) + "/session");
                 final HttpResponse<String> response = updateSession(handle, body, token);
                 if (response.statusCode() != 200) {
-                    throw new IOException("Xbox session join failed: HTTP " + response.statusCode());
+                    throw BedrockXboxError.response("Xbox session join", response);
                 }
                 final URI sessionUri = sessionUri(response);
                 joined = new JoinedWorld(sessionUri, account, subscription);
@@ -220,7 +220,7 @@ public final class BedrockFriendsService {
     private static JsonObject request(final URI uri, final String method, final @Nullable JsonObject body, final XblXstsToken token) throws IOException, InterruptedException {
         final HttpResponse<String> response = send(uri, method, body, token, null);
         if (response.statusCode() / 100 != 2) {
-            throw new IOException("Xbox request failed: HTTP " + response.statusCode());
+            throw BedrockXboxError.response("Xbox session request", response);
         }
         return JsonParser.parseString(response.body()).getAsJsonObject();
     }

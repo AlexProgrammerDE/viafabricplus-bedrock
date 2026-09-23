@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmTimelineService;
+import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -122,7 +123,8 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
                 if (error != null) {
                     ViaFabricPlusBedrock.impl().logger().error("Failed to load Realm Timeline consent", error);
                     this.failed = true;
-                    this.status = Component.translatable("bedrock_realms.viafabricplus.timeline.load_failed");
+                    this.status = BedrockRealmsError.describe(error);
+                    showToast(this.status);
                 } else {
                     this.optedIn = optedIn;
                     this.status = Component.translatable(optedIn ? "bedrock_realms.viafabricplus.timeline.already_in"
@@ -139,7 +141,8 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
                 this.saving = false;
                 if (error != null) {
                     ViaFabricPlusBedrock.impl().logger().error("Failed to opt in to Realm Timeline", error);
-                    this.status = Component.translatable("bedrock_realms.viafabricplus.timeline.save_failed");
+                    this.status = BedrockRealmsError.describe(error);
+                    showToast(this.status);
                 } else {
                     this.optedIn = true;
                     this.onClose();

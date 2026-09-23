@@ -27,6 +27,7 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockFriendsService.Friend
 import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService.FriendRequests;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService.SocialUser;
+import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.BedrockConnectionUtil;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
@@ -84,6 +85,8 @@ public final class BedrockFriendsScreen extends VFPScreen {
     private boolean worldsError;
     private boolean searchError;
     private long lastRefresh;
+    private String lastErrorToast = "";
+    private long lastErrorToastAt;
     private SlotList list;
     private Button joinButton;
     private Button profileButton;
@@ -390,7 +393,13 @@ public final class BedrockFriendsScreen extends VFPScreen {
         ViaFabricPlusBedrock.impl().logger().error(message, error);
         Minecraft.getInstance().execute(() -> {
             reset.run();
-            showToast(Component.translatable("bedrock_friends.viafabricplus.failed"));
+            final Component details = BedrockXboxError.describe(error);
+            final String text = details.getString();
+            if (!text.equals(this.lastErrorToast) || System.nanoTime() - this.lastErrorToastAt > TimeUnit.SECONDS.toNanos(3)) {
+                showToast(details);
+                this.lastErrorToast = text;
+                this.lastErrorToastAt = System.nanoTime();
+            }
             if (this.view != View.SEARCH || this.searchError) {
                 this.rebuildWidgets();
             }

@@ -103,9 +103,9 @@ public final class BedrockSocialService {
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .method(add ? "PUT" : "DELETE", HttpRequest.BodyPublishers.noBody())
                     .build();
-                final HttpResponse<Void> response = HTTP.send(request, HttpResponse.BodyHandlers.discarding());
-                if (response.statusCode() != 200 && response.statusCode() != 201) {
-                    throw new IOException("Xbox friend update failed: HTTP " + response.statusCode());
+                final HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() / 100 != 2) {
+                    throw BedrockXboxError.response("Xbox friend update", response);
                 }
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not update Xbox friend", exception);
@@ -123,7 +123,7 @@ public final class BedrockSocialService {
             .GET().build();
         final HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            throw new IOException("Xbox people request failed: HTTP " + response.statusCode());
+            throw BedrockXboxError.response("Xbox people request", response);
         }
         final JsonObject data = JsonParser.parseString(response.body()).getAsJsonObject();
         final List<SocialUser> result = new ArrayList<>();

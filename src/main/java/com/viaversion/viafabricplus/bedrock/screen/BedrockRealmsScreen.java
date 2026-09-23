@@ -24,6 +24,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.BedrockConnectionUtil;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.NetherNetJsonRpcAddress;
+import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -39,7 +40,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
-import net.raphimc.minecraftauth.extra.realms.exception.RealmsRequestException;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsJoinInformation;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsServer;
 import net.raphimc.minecraftauth.extra.realms.service.impl.BedrockRealmsService;
@@ -53,7 +53,6 @@ public final class BedrockRealmsScreen extends VFPScreen {
     public static final Component TITLE = Component.translatable("screen.viafabricplus.bedrock_realms");
 
     private static final int ROW_WIDTH = 360;
-    private static final int TIMELINE_OPT_IN_REQUIRED = 6015;
 
     private static @Nullable List<RealmsServer> realmsServers;
     private static @Nullable BedrockRealmsService service;
@@ -65,6 +64,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
     private boolean joining;
     private Button joinButton;
     private Button leaveButton;
+    private Button refreshButton;
 
     public BedrockRealmsScreen() {
         super(TITLE, true);
@@ -80,6 +80,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
 
     @Override
     protected void init() {
+        if (!this.requested && !loading) {
+            invalidate(); // A newly opened screen needs the Realm's current open and subscription state.
+        }
         if (realmsServers == null && !this.requested) {
             this.load();
         }
@@ -97,7 +100,8 @@ public final class BedrockRealmsScreen extends VFPScreen {
             new AcceptInvitationCodeScreen(this::acceptInvite).open(this)).build();
         inviteButton.active = service != null;
 
-        this.addFooter(this.joinButton, this.leaveButton, inviteButton);
+        this.refreshButton = Button.builder(Component.translatable("bedrock_realms.viafabricplus.refresh"), _ -> this.refresh()).build();
+        this.addFooter(this.joinButton, this.leaveButton, inviteButton, this.refreshButton);
 
         super.init();
     }
@@ -109,6 +113,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
         final boolean selected = this.list.getFocused() instanceof SlotEntry;
         this.joinButton.active = selected && !this.joining;
         this.leaveButton.active = selected && !this.joining;
+        this.refreshButton.active = !loading && !this.joining;
     }
 
     // Guarded against the screen being rebuilt while the request is still running, which would send it again
@@ -145,6 +150,16 @@ public final class BedrockRealmsScreen extends VFPScreen {
         }).exceptionally(throwable -> this.fail("Failed to check the realms availability", throwable));
     }
 
+    private void refresh() {
+        if (loading) {
+            return;
+        }
+        invalidate();
+        this.requested = false;
+        this.load();
+        this.rebuildWidgets();
+    }
+
     private void join() {
         final RealmsServer realmsServer = ((SlotEntry) this.list.getFocused()).realmsServer;
         this.join(realmsServer);
@@ -157,6 +172,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
         if (realmsServer.isExpired()) {
             showToast(Component.translatable("bedrock_realms.viafabricplus.expired"));
             return;
+        } else if ("CLOSED".equalsIgnoreCase(realmsServer.getState())) {
+            showToast(Component.translatable("bedrock_realms.viafabricplus.closed"));
+            return;
         } else if (!realmsServer.isCompatible()) {
             showToast(Component.translatable("bedrock_realms.viafabricplus.incompatible"));
             return;
@@ -168,26 +186,20 @@ public final class BedrockRealmsScreen extends VFPScreen {
                 this.joining = false;
                 if (error == null) {
                     this.connect(server);
-                } else if (timelineOptInRequired(error)) {
+                } else if (BedrockRealmsError.timelineOptInRequired(error)) {
                     final BedrockAuthManager account = ViaFabricPlusBedrock.impl().account().get();
                     if (account != null) {
                         new BedrockRealmTimelineScreen(account, realmsServer, () -> this.join(realmsServer)).open(this);
                     } else {
                         this.fail("Bedrock account was removed while joining the realm", error);
                     }
+                } else if (BedrockRealmsError.subscriptionMissing(error)) {
+                    showToast(BedrockRealmsError.describe(error));
+                    this.refresh();
                 } else {
                     this.fail("Failed to join the realm", error);
                 }
             }));
-    }
-
-    private static boolean timelineOptInRequired(final Throwable throwable) {
-        for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
-            if (cause instanceof RealmsRequestException requestException && requestException.getErrorCode() == TIMELINE_OPT_IN_REQUIRED) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void connect(final RealmsJoinInformation server) {
@@ -219,11 +231,13 @@ public final class BedrockRealmsScreen extends VFPScreen {
     }
 
     private Void fail(final String message, final Throwable throwable) {
-        loading = false;
-        status = Component.translatable("base.viafabricplus.something_went_wrong");
         ViaFabricPlusBedrock.impl().logger().error(message, throwable);
-        showToast(status);
-        Minecraft.getInstance().execute(this::rebuildWidgets);
+        Minecraft.getInstance().execute(() -> {
+            loading = false;
+            status = BedrockRealmsError.describe(throwable);
+            showToast(status);
+            this.rebuildWidgets();
+        });
         return null;
     }
 
@@ -288,11 +302,15 @@ public final class BedrockRealmsScreen extends VFPScreen {
             if (worldName != null && !worldName.isBlank()) {
                 name.append(worldName);
             }
-            name.append(" (").append(this.realmsServer.getState()).append(")");
-
-            context.text(font, name.toString(), SLOT_MARGIN, SLOT_MARGIN, this.slotList.getFocused() == this ? ACCENT_COLOR : -1);
+            final String state = this.realmsServer.isExpired() ? Component.translatable("bedrock_realms.viafabricplus.expired_label").getString()
+                : "CLOSED".equalsIgnoreCase(this.realmsServer.getState()) ? Component.translatable("bedrock_realms.viafabricplus.closed_label").getString()
+                    : this.realmsServer.getState();
+            name.append(" (").append(state).append(")");
 
             final String version = this.version();
+            final int availableWidth = entryWidth - font.width(version) - SLOT_MARGIN * 3 - 8;
+            context.text(font, fit(font, name.toString(), availableWidth), SLOT_MARGIN, SLOT_MARGIN,
+                this.slotList.getFocused() == this ? ACCENT_COLOR : -1);
             context.text(font, version, entryWidth - font.width(version) - SLOT_MARGIN, SLOT_MARGIN, -1);
 
             final String motd = this.realmsServer.getMotd();
@@ -308,6 +326,17 @@ public final class BedrockRealmsScreen extends VFPScreen {
             } else {
                 return this.realmsServer.getWorldType();
             }
+        }
+
+        private static String fit(final Font font, final String value, final int width) {
+            if (width <= 0) {
+                return "";
+            }
+            if (font.width(value) <= width) {
+                return value;
+            }
+            final String ellipsis = "…";
+            return font.plainSubstrByWidth(value, Math.max(0, width - font.width(ellipsis))) + ellipsis;
         }
 
     }
