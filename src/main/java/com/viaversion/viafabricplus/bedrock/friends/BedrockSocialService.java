@@ -93,11 +93,14 @@ public final class BedrockSocialService {
             try {
                 final URI uri = SOCIAL.resolve("xuid(" + xuid + ")" + (add ? "" : "?deleteRelationships=friends"));
                 final HttpRequest request = HttpRequest.newBuilder(uri)
+                    // Xbox requires Content-Length: 0 here; Java's HTTP/2 request omits it and receives 411.
+                    .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.ofSeconds(15))
                     .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
                     .header("X-Xbl-Contract-Version", "3")
                     .header("Accept", "application/json")
                     .header("Cache-Control", "no-cache")
+                    .header("Accept-Language", "en-US,en;q=0.9")
                     .method(add ? "PUT" : "DELETE", HttpRequest.BodyPublishers.noBody())
                     .build();
                 final HttpResponse<Void> response = HTTP.send(request, HttpResponse.BodyHandlers.discarding());
