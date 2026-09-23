@@ -29,7 +29,7 @@ import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
-import dev.kastle.netty.channel.nethernet.config.NetherNetAddress;
+import org.cloudburstmc.netty.channel.nethernet.config.NetherNetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -59,6 +59,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
     private static Component status = Component.translatable("bedrock_realms.viafabricplus.warning");
 
     private SlotList list;
+    private boolean requested;
     private Button joinButton;
     private Button leaveButton;
 
@@ -76,7 +77,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
 
     @Override
     protected void init() {
-        if (realmsServers == null) {
+        if (realmsServers == null && !this.requested) {
             this.load();
         }
 
@@ -120,6 +121,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
         }
 
         loading = true;
+        this.requested = true;
         status = Component.translatable("bedrock_realms.viafabricplus.availability_check");
 
         final BedrockRealmsService realmsService = new BedrockRealmsService(MinecraftAuth.createHttpClient(), ProtocolConstants.BEDROCK_VERSION_NAME, account.getRealmsXstsToken());

@@ -12,6 +12,7 @@
   "bedrock_account.viafabricplus.notice": "Your browser should have opened.\nClosing this screen will cancel the process!",
 
   "screen.viafabricplus.bedrock_realms": "Bedrock Realms",
+  "screen.viafabricplus.bedrock_friends": "Friends' worlds",
   "screen.viafabricplus.accept_invite": "Accept an invitation code",
 
   "bedrock_realms.viafabricplus.warning": "This feature requires a Bedrock Edition account to be set in the settings!",
@@ -24,6 +25,15 @@
   "bedrock_realms.viafabricplus.expired": "The Realm is expired",
   "bedrock_realms.viafabricplus.incompatible": "The Realms Minecraft version is either too old or too new",
   "bedrock_realms.viafabricplus.unsupported_protocol": "Realms via the %s protocol is not supported. You can't join this realm.",
+
+  "bedrock_friends.viafabricplus.loading": "Looking for friends' worlds...",
+  "bedrock_friends.viafabricplus.empty": "No friends have a joinable Bedrock world right now.",
+  "bedrock_friends.viafabricplus.failed": "Could not load or join a friend's world. Check the log for details.",
+  "bedrock_friends.viafabricplus.join": "Join world",
+  "bedrock_friends.viafabricplus.refresh": "Refresh",
+  "bedrock_friends.viafabricplus.incompatible": "This world uses a different Bedrock version.",
+  "bedrock_friends.viafabricplus.full": "This world is full.",
+  "bedrock_nethernet.viafabricplus.status_unavailable": "Status is not available for this NetherNet address.",
 
   "minecraftauth_library.viafabricplus.msatoken": "Obtained Microsoft Access Token",
   "minecraftauth_library.viafabricplus.xbldevicetoken": "Obtained Xbox Live Device Token",

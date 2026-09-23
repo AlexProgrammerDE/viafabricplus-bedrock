@@ -5,14 +5,28 @@ to the mod.
 
 ## Usage
 
-1. Install [ViaFabricPlus](https://modrinth.com/mod/viafabricplus) 5.0.1 or newer and this addon.
+1. Install [ViaFabricPlus](https://modrinth.com/mod/viafabricplus) 5.1.0 or newer and this addon.
 2. Open the ViaFabricPlus screen and select the Bedrock version.
-3. For online mode servers and Realms, open the settings, switch to the `Bedrock` tab and click
+3. For online mode servers, Realms, and friends' worlds, open the settings, switch to the `Bedrock` tab and click
    `Account for Bedrock Edition`. Your browser opens for the Microsoft login, and the entry then shows the name of the
    account that is signed in.
 
-Logging in is only needed once and is independent of Realms — the same account is used for every online mode Bedrock
-server. `Bedrock Realms` in the ViaFabricPlus screen stays disabled until an account is set.
+Log in once. The same account is used for every online mode Bedrock
+server. `Bedrock Realms` and `Friends' worlds` in the ViaFabricPlus screen stay disabled until an account is set.
+
+Open `Friends' worlds` to see joinable worlds hosted by Xbox friends. Select a world and click `Join world`.
+The screen checks the world's protocol before joining. Use `Refresh` to check for new worlds.
+
+To join a NetherNet server directly, select the Bedrock version and enter one of these address forms:
+
+| Address | Signaling service |
+| --- | --- |
+| `nethernet://host[:port]` | HTTP, default port 19132 |
+| `nethernet-lan://host[:port]` | LAN discovery, default port 7551 |
+| `nethernet-xbox://network-id` | Xbox WebSocket |
+| `nethernet-xbox-json-rpc://network-id` | Xbox JSON-RPC |
+
+Xbox signaling needs a Bedrock account. HTTP and LAN signaling can connect without one if the server permits it.
 
 The remaining `Bedrock` settings control whether the default Bedrock port is filled in automatically and whether
 ViaBedrock's experimental features are enabled.
