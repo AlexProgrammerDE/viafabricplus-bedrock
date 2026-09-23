@@ -514,24 +514,27 @@ public final class BedrockFriendsScreen extends VFPScreen {
                 : this.user.online() ? "bedrock_friends.viafabricplus.online" : "bedrock_friends.viafabricplus.offline");
             final int statusWidth = font.width(status);
             final int textWidth = entryWidth - statusWidth - SLOT_MARGIN * 3 - 8;
-            if (this.list.getFocused() == this) {
-                graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
-            }
-            graphics.text(font, fit(font, this.user.name(), textWidth), SLOT_MARGIN, SLOT_MARGIN + 1,
-                this.list.getFocused() == this ? ACCENT_COLOR : -1);
-            graphics.text(font, status, entryWidth - statusWidth - SLOT_MARGIN, SLOT_MARGIN + 1,
-                world != null ? ACCENT_COLOR : this.user.online() ? -1 : SECONDARY_COLOR);
-
             final String detail;
             if (world != null) {
                 detail = Component.translatable("bedrock_friends.viafabricplus.playing", world.worldName()).getString();
             } else if (this.list.showingSearch() && !this.user.gamertag().equalsIgnoreCase(this.user.name())) {
                 detail = this.user.gamertag();
             } else {
-                detail = this.user.presence().isBlank() ? this.user.gamertag() : this.user.presence();
+                detail = this.user.presence().isBlank() && !this.user.gamertag().equalsIgnoreCase(this.user.name())
+                    ? this.user.gamertag() : this.user.presence();
             }
-            graphics.text(font, fit(font, detail, entryWidth - SLOT_MARGIN * 2), SLOT_MARGIN,
-                SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
+            final int titleY = detail.isBlank() ? (entryHeight - font.lineHeight) / 2 : SLOT_MARGIN + 1;
+            if (this.list.getFocused() == this) {
+                graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
+            }
+            graphics.text(font, fit(font, this.user.name(), textWidth), SLOT_MARGIN, titleY,
+                this.list.getFocused() == this ? ACCENT_COLOR : -1);
+            graphics.text(font, status, entryWidth - statusWidth - SLOT_MARGIN, titleY,
+                world != null ? ACCENT_COLOR : this.user.online() ? -1 : SECONDARY_COLOR);
+            if (!detail.isBlank()) {
+                graphics.text(font, fit(font, detail, entryWidth - SLOT_MARGIN * 2), SLOT_MARGIN,
+                    SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
+            }
         }
 
     }
