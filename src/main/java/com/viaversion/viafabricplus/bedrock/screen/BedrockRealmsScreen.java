@@ -39,6 +39,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.raphimc.minecraftauth.MinecraftAuth;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
+import net.raphimc.minecraftauth.extra.realms.exception.RealmsRequestException;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsJoinInformation;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsServer;
 import net.raphimc.minecraftauth.extra.realms.service.impl.BedrockRealmsService;
@@ -52,6 +53,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
     public static final Component TITLE = Component.translatable("screen.viafabricplus.bedrock_realms");
 
     private static final int ROW_WIDTH = 360;
+    private static final int TIMELINE_OPT_IN_REQUIRED = 6015;
 
     private static @Nullable List<RealmsServer> realmsServers;
     private static @Nullable BedrockRealmsService service;
@@ -60,6 +62,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
 
     private SlotList list;
     private boolean requested;
+    private boolean joining;
     private Button joinButton;
     private Button leaveButton;
 
@@ -104,8 +107,8 @@ public final class BedrockRealmsScreen extends VFPScreen {
         super.tick();
 
         final boolean selected = this.list.getFocused() instanceof SlotEntry;
-        this.joinButton.active = selected;
-        this.leaveButton.active = selected;
+        this.joinButton.active = selected && !this.joining;
+        this.leaveButton.active = selected && !this.joining;
     }
 
     // Guarded against the screen being rebuilt while the request is still running, which would send it again
@@ -144,6 +147,13 @@ public final class BedrockRealmsScreen extends VFPScreen {
 
     private void join() {
         final RealmsServer realmsServer = ((SlotEntry) this.list.getFocused()).realmsServer;
+        this.join(realmsServer);
+    }
+
+    private void join(final RealmsServer realmsServer) {
+        if (this.joining) {
+            return;
+        }
         if (realmsServer.isExpired()) {
             showToast(Component.translatable("bedrock_realms.viafabricplus.expired"));
             return;
@@ -152,9 +162,32 @@ public final class BedrockRealmsScreen extends VFPScreen {
             return;
         }
 
+        this.joining = true;
         service.joinWorldAsync(realmsServer)
-            .thenAcceptAsync(this::connect, Minecraft.getInstance())
-            .exceptionally(throwable -> this.fail("Failed to join the realm", throwable));
+            .whenComplete((server, error) -> Minecraft.getInstance().execute(() -> {
+                this.joining = false;
+                if (error == null) {
+                    this.connect(server);
+                } else if (timelineOptInRequired(error)) {
+                    final BedrockAuthManager account = ViaFabricPlusBedrock.impl().account().get();
+                    if (account != null) {
+                        new BedrockRealmTimelineScreen(account, realmsServer, () -> this.join(realmsServer)).open(this);
+                    } else {
+                        this.fail("Bedrock account was removed while joining the realm", error);
+                    }
+                } else {
+                    this.fail("Failed to join the realm", error);
+                }
+            }));
+    }
+
+    private static boolean timelineOptInRequired(final Throwable throwable) {
+        for (Throwable cause = throwable; cause != null; cause = cause.getCause()) {
+            if (cause instanceof RealmsRequestException requestException && requestException.getErrorCode() == TIMELINE_OPT_IN_REQUIRED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void connect(final RealmsJoinInformation server) {
