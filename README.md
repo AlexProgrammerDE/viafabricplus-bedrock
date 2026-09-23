@@ -12,10 +12,15 @@ to the mod.
    account that is signed in.
 
 Log in once. The same account is used for every online mode Bedrock
-server. `Bedrock Realms` and `Friends' worlds` in the ViaFabricPlus screen stay disabled until an account is set.
+server. `Bedrock Realms` and `Bedrock Friends` in the ViaFabricPlus screen stay disabled until an account is set.
 
-Open `Friends' worlds` to see joinable worlds hosted by Xbox friends. Select a world and click `Join world`.
-The screen checks the world's protocol before joining. Use `Refresh` to check for new worlds.
+Open `Bedrock Friends` to see your Xbox friends and their online status. The `Requests` tab lets you accept, decline,
+or cancel friend requests. Use `Find players` to search by Gamertag and send a request. Select a friend and click
+`Remove friend` to remove them.
+
+The `Worlds` tab lists joinable worlds hosted by Xbox friends. Select a world and click `Join world`. You can also
+select a friend with a joinable world from the `Friends` tab. The screen checks the world's protocol before joining.
+Use `Refresh` to update the lists.
 
 To join a NetherNet server directly, select the Bedrock version and enter one of these address forms:
 

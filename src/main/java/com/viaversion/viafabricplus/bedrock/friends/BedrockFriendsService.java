@@ -88,7 +88,7 @@ public final class BedrockFriendsService {
                     if (address == null) {
                         continue;
                     }
-                    worlds.add(new FriendWorld(string(activity, "id"), string(properties, "hostName"),
+                    worlds.add(new FriendWorld(string(activity, "id"), string(activity, "ownerXuid"), string(properties, "hostName"),
                         string(properties, "worldName"), string(properties, "version"),
                         number(properties, "MemberCount"), number(properties, "MaxMemberCount"),
                         number(properties, "protocol"), address));
@@ -276,7 +276,8 @@ public final class BedrockFriendsService {
         return parent != null && parent.has(key) && parent.get(key).isJsonPrimitive() && parent.get(key).getAsBoolean();
     }
 
-    public record FriendWorld(String handleId, String hostName, String worldName, String version, int players, int maxPlayers, int protocol, SocketAddress address) {
+    public record FriendWorld(String handleId, String ownerXuid, String hostName, String worldName, String version,
+                              int players, int maxPlayers, int protocol, SocketAddress address) {
     }
 
     public static final class JoinedWorld implements AutoCloseable {

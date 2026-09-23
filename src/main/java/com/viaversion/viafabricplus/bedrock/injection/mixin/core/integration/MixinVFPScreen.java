@@ -59,7 +59,7 @@ public abstract class MixinVFPScreen {
         final Button friends = friendsBuilder.build();
         // The realms screen connects to a server, which is not possible while already being connected to one
         realms.active = !missingAccount && Minecraft.getInstance().getConnection() == null;
-        friends.active = realms.active;
+        friends.active = !missingAccount;
 
         final Button[] result = Arrays.copyOf(buttons, buttons.length + 2);
         result[buttons.length] = realms;
