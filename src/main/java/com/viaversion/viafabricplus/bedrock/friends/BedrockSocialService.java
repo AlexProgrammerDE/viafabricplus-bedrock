@@ -43,7 +43,7 @@ public final class BedrockSocialService {
 
     private static final URI PEOPLE = URI.create("https://peoplehub.xboxlive.com/users/me/people/");
     private static final URI SOCIAL = URI.create("https://social.xboxlive.com/users/me/people/friends/v2/");
-    private static final String DECORATIONS = "/decoration/detail,presenceDetail";
+    private static final String DECORATIONS = "/decoration/bio,detail,multiplayerSummary,preferredColor,presenceDetail";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     private BedrockSocialService() {
@@ -116,6 +116,7 @@ public final class BedrockSocialService {
             .header("Authorization", token.getAuthorizationHeader())
             .header("X-Xbl-Contract-Version", "7")
             .header("Accept", "application/json")
+            .header("Accept-Language", "en-US,en;q=0.9")
             .GET().build();
         final HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
