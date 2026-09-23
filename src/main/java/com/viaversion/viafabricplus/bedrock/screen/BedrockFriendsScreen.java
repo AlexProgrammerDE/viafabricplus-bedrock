@@ -83,6 +83,7 @@ public final class BedrockFriendsScreen extends VFPScreen {
     private long lastRefresh;
     private SlotList list;
     private Button joinButton;
+    private Button profileButton;
     private Button addButton;
     private Button removeButton;
     private Button refreshButton;
@@ -118,10 +119,11 @@ public final class BedrockFriendsScreen extends VFPScreen {
         this.list = this.addRenderableWidget(new SlotList(this.minecraft, this.width, this.height, LIST_TOP, FOOTER_HEIGHT,
             (this.font.lineHeight + 2) * 3));
         this.joinButton = Button.builder(Component.translatable("bedrock_friends.viafabricplus.join"), _ -> this.join()).build();
+        this.profileButton = Button.builder(Component.translatable("bedrock_friends.viafabricplus.profile"), _ -> this.showProfile()).build();
         this.addButton = Button.builder(Component.translatable("bedrock_friends.viafabricplus.add"), _ -> this.addFriend()).build();
         this.removeButton = Button.builder(Component.translatable("bedrock_friends.viafabricplus.remove"), _ -> this.confirmRemove()).build();
         this.refreshButton = Button.builder(Component.translatable("bedrock_friends.viafabricplus.refresh"), _ -> this.refresh()).build();
-        this.addFooter(this.joinButton, this.addButton, this.removeButton, this.refreshButton);
+        this.addFooter(this.joinButton, this.profileButton, this.addButton, this.removeButton, this.refreshButton);
         super.init();
 
         if (!this.requested) {
@@ -136,6 +138,7 @@ public final class BedrockFriendsScreen extends VFPScreen {
         final SocialUser user = this.selectedUser();
         final boolean busy = this.joining || this.mutating;
         this.joinButton.active = !busy && Minecraft.getInstance().getConnection() == null && this.selectedWorld() != null;
+        this.profileButton.active = user != null;
         this.addButton.active = !busy && user != null && !this.isFriend(user) && !this.isOutgoing(user);
         this.removeButton.active = !busy && user != null && (this.isFriend(user) || this.isIncoming(user) || this.isOutgoing(user));
         this.addButton.setMessage(Component.translatable(user != null && this.isIncoming(user)
@@ -337,6 +340,16 @@ public final class BedrockFriendsScreen extends VFPScreen {
         if (user != null && !this.isFriend(user) && !this.isOutgoing(user)) {
             this.updateFriend(user, true);
         }
+    }
+
+    private void showProfile() {
+        final SocialUser user = this.selectedUser();
+        if (user == null) {
+            return;
+        }
+        final String relationship = this.isFriend(user) ? "profile_friend" : this.isIncoming(user)
+            ? "profile_incoming" : this.isOutgoing(user) ? "profile_outgoing" : "profile_not_friend";
+        new BedrockFriendProfileScreen(user, Component.translatable("bedrock_friends.viafabricplus." + relationship)).open(this);
     }
 
     private void confirmRemove() {

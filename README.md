@@ -15,8 +15,8 @@ Log in once. The same account is used for every online mode Bedrock
 server. `Bedrock Realms` and `Bedrock Friends` in the ViaFabricPlus screen stay disabled until an account is set.
 
 Open `Bedrock Friends` to see your Xbox friends and their online status. The `Requests` tab lets you accept, decline,
-or cancel friend requests. Use `Find players` to search by Gamertag and send a request. Select a friend and click
-`Remove friend` to remove them.
+or cancel friend requests. Use `Find players` to search by Gamertag and send a request. Select a player and click
+`Profile` to see their Xbox details, or `Remove friend` to remove them.
 
 The `Worlds` tab lists joinable worlds hosted by Xbox friends. Select a world and click `Join world`. You can also
 select a friend with a joinable world from the `Friends` tab. The screen checks the world's protocol before joining.

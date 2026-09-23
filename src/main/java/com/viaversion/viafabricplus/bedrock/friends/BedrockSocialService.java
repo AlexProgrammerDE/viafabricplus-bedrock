@@ -134,10 +134,13 @@ public final class BedrockSocialService {
             }
             final String gamertag = string(user, "uniqueModernGamertag").isBlank()
                 ? string(user, "gamertag") : string(user, "uniqueModernGamertag");
+            final JsonObject detail = user.has("detail") && user.get("detail").isJsonObject()
+                ? user.getAsJsonObject("detail") : new JsonObject();
             result.add(new SocialUser(xuid, gamertag, string(user, "displayName"),
                 "Online".equalsIgnoreCase(string(user, "presenceState")), string(user, "presenceText"),
-                string(user, "gamerScore"), bool(user, "isFriend"),
-                bool(user, "isFriendRequestReceived"), bool(user, "isFriendRequestSent")));
+                string(user, "gamerScore"), number(detail, "friendCount"), bool(user, "isFriend") || bool(detail, "friend"),
+                bool(user, "isFriendRequestReceived") || bool(detail, "isFriendRequestReceived"),
+                bool(user, "isFriendRequestSent") || bool(detail, "isFriendRequestSent")));
         }
         return List.copyOf(result);
     }
@@ -150,11 +153,16 @@ public final class BedrockSocialService {
         return object.has(key) && object.get(key).isJsonPrimitive() && object.get(key).getAsBoolean();
     }
 
+    private static int number(final JsonObject object, final String key) {
+        return object.has(key) && object.get(key).isJsonPrimitive() && object.get(key).getAsJsonPrimitive().isNumber()
+            ? object.get(key).getAsInt() : -1;
+    }
+
     public record FriendRequests(List<SocialUser> incoming, List<SocialUser> outgoing) {
     }
 
     public record SocialUser(String xuid, String gamertag, String displayName, boolean online, String presence,
-                             String gamerScore, boolean friend, boolean incoming, boolean outgoing) {
+                             String gamerScore, int friendCount, boolean friend, boolean incoming, boolean outgoing) {
 
         public String name() {
             return !this.displayName.isBlank() ? this.displayName : !this.gamertag.isBlank() ? this.gamertag : this.xuid;
