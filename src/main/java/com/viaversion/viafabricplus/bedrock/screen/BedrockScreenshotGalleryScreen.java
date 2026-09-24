@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.mojang.blaze3d.Blaze3D;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -32,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -57,7 +59,7 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
     @Override
     protected void init() {
         this.list = this.addRenderableWidget(new GalleryList(this.minecraft, this.width, this.height, 58,
-            FOOTER_HEIGHT, this.font.lineHeight * 2 + 12));
+            FOOTER_HEIGHT, 54));
         this.openButton = Button.builder(Component.translatable("bedrock_gallery.viafabricplus.open"), _ -> this.openSelected()).build();
         this.addFooter(this.openButton,
             Button.builder(Component.translatable("bedrock_gallery.viafabricplus.folder"), _ -> Blaze3D.openUri(this.folder.toUri())).build(),
@@ -90,7 +92,10 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
             } else {
                 try (Stream<Path> files = Files.list(this.folder)) {
                     this.screenshots = files.filter(Files::isRegularFile)
-                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".png"))
+                        .filter(path -> {
+                            final String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+                            return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg");
+                        })
                         .sorted(Comparator.comparingLong(BedrockScreenshotGalleryScreen::modified).reversed())
                         .limit(100).toList();
                 }
@@ -156,12 +161,16 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
         public void mappedRender(final GuiGraphicsExtractor graphics, final int width, final int height) {
             final Font font = Minecraft.getInstance().font;
             final String name = this.path.getFileName().toString();
-            final int available = width - SLOT_MARGIN * 2;
+            final int thumbnailWidth = 70;
+            BedrockImageCache.drawScreenshot(graphics, this.path, SLOT_MARGIN, SLOT_MARGIN,
+                thumbnailWidth, height - SLOT_MARGIN * 2);
+            final int textX = SLOT_MARGIN + thumbnailWidth + 8;
+            final int available = width - textX - SLOT_MARGIN;
             final String shown = font.width(name) <= available ? name
                 : font.plainSubstrByWidth(name, Math.max(0, available - font.width("…"))) + "…";
-            graphics.text(font, shown, SLOT_MARGIN, SLOT_MARGIN + 1, -1);
-            graphics.text(font, Component.translatable("bedrock_gallery.viafabricplus.local"), SLOT_MARGIN,
-                SLOT_MARGIN + font.lineHeight + 4, 0xFFB8B8B8);
+            graphics.text(font, shown, textX, SLOT_MARGIN + 6, -1);
+            graphics.text(font, Component.translatable("bedrock_gallery.viafabricplus.local"), textX,
+                SLOT_MARGIN + font.lineHeight + 10, 0xFFB8B8B8);
         }
 
     }

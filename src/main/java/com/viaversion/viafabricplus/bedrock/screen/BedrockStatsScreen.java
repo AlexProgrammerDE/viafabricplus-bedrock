@@ -25,6 +25,7 @@ import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Statistic;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -189,10 +190,19 @@ public final class BedrockStatsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int width, final int height) {
             final Font font = Minecraft.getInstance().font;
+            final String icon = switch (this.stat) {
+                case MINUTES_PLAYED -> "timer@0.5x.icon";
+                case BLOCKS_BROKEN -> "pickaxe@0.5x.icon";
+                case MOBS_DEFEATED -> "sword@0.5x.icon";
+                case DISTANCE_TRAVELED -> "boots@0.5x.icon";
+            };
+            final int iconSize = height - SLOT_MARGIN * 2;
+            BedrockUiArt.drawIcon(graphics, icon, SLOT_MARGIN, SLOT_MARGIN, iconSize);
+            final int textX = SLOT_MARGIN + iconSize + 6;
             final String label = Component.translatable("bedrock_stats.viafabricplus." + this.stat.name().toLowerCase()).getString();
-            graphics.text(font, label, SLOT_MARGIN, SLOT_MARGIN + 1, -1);
+            graphics.text(font, label, textX, SLOT_MARGIN + 1, -1);
             final String value = format(this.stat, this.player);
-            graphics.text(font, value, SLOT_MARGIN, SLOT_MARGIN + font.lineHeight + 4, 0xFF8FBBFF);
+            graphics.text(font, value, textX, SLOT_MARGIN + font.lineHeight + 4, 0xFF8FBBFF);
             if (BedrockStatsScreen.this.comparing) {
                 final String comparison = format(this.stat, this.own);
                 graphics.text(font, comparison, width - SLOT_MARGIN - font.width(comparison),

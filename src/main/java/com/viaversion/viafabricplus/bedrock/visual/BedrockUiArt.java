@@ -51,6 +51,16 @@ public final class BedrockUiArt {
         return draw(graphics, "background-main", 0, 0, width, height);
     }
 
+    public static boolean drawIcon(final GuiGraphicsExtractor graphics, final String asset,
+                                   final int x, final int y, final int size) {
+        return draw(graphics, asset, x, y, size, size);
+    }
+
+    public static boolean drawTimelineExample(final GuiGraphicsExtractor graphics,
+                                              final int x, final int y, final int width, final int height) {
+        return draw(graphics, "timeline-opt-in", x, y, width, height);
+    }
+
     private static boolean draw(final GuiGraphicsExtractor graphics, final String asset,
                                 final int x, final int y, final int width, final int height) {
         final Path path = ART.get(asset);

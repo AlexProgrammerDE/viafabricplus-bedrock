@@ -11,6 +11,10 @@
 package com.viaversion.viafabricplus.bedrock.visual;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -19,6 +23,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -26,13 +31,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import javax.imageio.ImageIO;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
 
-/** Loads Xbox profile pictures and locally installed Bedrock artwork without blocking the game thread. */
+/** Loads Xbox and Realm imagery without blocking the game thread. */
 public final class BedrockImageCache {
 
     private static final int MAX_IMAGES = 128;
@@ -57,18 +63,61 @@ public final class BedrockImageCache {
         }
         final String host = uri.getHost();
         if (!"https".equals(uri.getScheme()) || uri.getUserInfo() != null || uri.getPort() != -1
-            || host == null || !(host.equals("xboxlive.com") || host.endsWith(".xboxlive.com"))) return false;
+            || host == null || !trustedImageHost(host)) return false;
         return draw(graphics, uri.toString(), () -> {
             final HttpRequest request = HttpRequest.newBuilder(uri).timeout(Duration.ofSeconds(15)).GET().build();
             final HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            if (response.statusCode() != 200) throw new IOException("Xbox image returned HTTP " + response.statusCode());
+            if (response.statusCode() != 200) throw new IOException("Image returned HTTP " + response.statusCode());
             return response.body();
         }, false, x, y, width, height);
+    }
+
+    public static boolean drawEncoded(final GuiGraphicsExtractor graphics, final String key, final String encoded,
+                                      final int x, final int y, final int width, final int height) {
+        if (encoded.isBlank() || encoded.length() > MAX_BYTES * 4 / 3 + 128) return false;
+        final int separator = encoded.indexOf(',');
+        final String data = encoded.startsWith("data:image/") && separator > 0
+            ? encoded.substring(separator + 1) : encoded;
+        return draw(graphics, "encoded:" + key + ':' + encoded.length() + ':' + encoded.hashCode(),
+            () -> Base64.getDecoder().decode(data), false, x, y, width, height);
+    }
+
+    private static boolean trustedImageHost(final String host) {
+        return host.equals("xboxlive.com") || host.endsWith(".xboxlive.com")
+            || host.equals("xbox.com") || host.endsWith(".xbox.com")
+            || host.equals("minecraft.net") || host.endsWith(".minecraft.net")
+            || host.equals("minecraft-services.net") || host.endsWith(".minecraft-services.net");
     }
 
     public static boolean drawLocal(final GuiGraphicsExtractor graphics, final Path path, final int x,
                                     final int y, final int width, final int height) {
         return draw(graphics, path.toUri().toString(), () -> Files.readAllBytes(path), true, x, y, width, height);
+    }
+
+    public static boolean drawScreenshot(final GuiGraphicsExtractor graphics, final Path path, final int x,
+                                         final int y, final int width, final int height) {
+        return draw(graphics, "screenshot:" + path.toUri(), () -> {
+            if (Files.size(path) > 32L * 1024 * 1024) throw new IOException("Screenshot is too large");
+            final BufferedImage original = ImageIO.read(path.toFile());
+            if (original == null || original.getWidth() > 8192 || original.getHeight() > 8192) {
+                throw new IOException("Invalid screenshot dimensions");
+            }
+            final int longest = Math.max(original.getWidth(), original.getHeight());
+            final double scale = Math.min(1D, 512D / longest);
+            final int scaledWidth = Math.max(1, (int) (original.getWidth() * scale));
+            final int scaledHeight = Math.max(1, (int) (original.getHeight() * scale));
+            final BufferedImage thumbnail = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
+            final Graphics2D painter = thumbnail.createGraphics();
+            try {
+                painter.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                painter.drawImage(original, 0, 0, scaledWidth, scaledHeight, null);
+            } finally {
+                painter.dispose();
+            }
+            final ByteArrayOutputStream encoded = new ByteArrayOutputStream();
+            ImageIO.write(thumbnail, "png", encoded);
+            return encoded.toByteArray();
+        }, false, x, y, width, height);
     }
 
     private static boolean draw(final GuiGraphicsExtractor graphics, final String key, final ImageSource source,

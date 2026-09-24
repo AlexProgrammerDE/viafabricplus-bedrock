@@ -141,6 +141,9 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
         final int tableY = bounds.graphicY + (bounds.compact ? 18 : 42);
         final int tableWidth = bounds.graphicWidth - (bounds.compact ? 16 : 36);
         final int tableHeight = bounds.graphicHeight - (bounds.compact ? 25 : 68);
+        if (!bounds.compact && BedrockUiArt.drawTimelineExample(graphics, tableX, tableY, tableWidth, tableHeight)) {
+            return;
+        }
         final int gutter = bounds.compact ? 18 : 32;
         final int headerHeight = bounds.compact ? 7 : 20;
         final int rows = bounds.compact ? 3 : 4;

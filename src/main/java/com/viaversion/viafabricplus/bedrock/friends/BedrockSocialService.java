@@ -197,6 +197,7 @@ public final class BedrockSocialService {
                     BedrockPlayerImages.remember(string(profile, "id"), picture.isBlank() ? appPicture : picture);
                     final String name = displayName.isBlank() ? gamertag : displayName;
                     if (!name.isBlank()) {
+                        BedrockPlayerImages.rememberName(string(profile, "id"), gamertag.isBlank() ? name : gamertag);
                         names.put(string(profile, "id"), name);
                     }
                 }
@@ -261,6 +262,7 @@ public final class BedrockSocialService {
             BedrockPlayerImages.remember(xuid, string(user, "displayPicRaw"));
             final String gamertag = string(user, "uniqueModernGamertag").isBlank()
                 ? string(user, "gamertag") : string(user, "uniqueModernGamertag");
+            BedrockPlayerImages.rememberName(xuid, gamertag);
             final JsonObject detail = user.has("detail") && user.get("detail").isJsonObject()
                 ? user.getAsJsonObject("detail") : new JsonObject();
             result.add(new SocialUser(xuid, gamertag, string(user, "displayName"),

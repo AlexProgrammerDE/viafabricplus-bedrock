@@ -25,6 +25,8 @@ import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Achievement;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -166,10 +168,17 @@ public final class BedrockAchievementsScreen extends VFPScreen {
             final Font font = Minecraft.getInstance().font;
             final String score = this.achievement.gamerscore() == 0 ? ""
                 : this.achievement.gamerscore() + " G";
-            final int textWidth = width - SLOT_MARGIN * 2 - font.width(score) - 12;
-            graphics.text(font, fit(font, this.achievement.name(), textWidth), SLOT_MARGIN, SLOT_MARGIN + 1,
+            final int iconSize = height - SLOT_MARGIN * 2;
+            if (!BedrockImageCache.drawRemote(graphics, this.achievement.iconUrl(), SLOT_MARGIN,
+                SLOT_MARGIN, iconSize, iconSize)) {
+                BedrockUiArt.drawIcon(graphics, "achievements@0.5x.icon", SLOT_MARGIN,
+                    SLOT_MARGIN, iconSize);
+            }
+            final int textX = SLOT_MARGIN + iconSize + 6;
+            final int textWidth = width - textX - SLOT_MARGIN - font.width(score) - 12;
+            graphics.text(font, fit(font, this.achievement.name(), textWidth), textX, SLOT_MARGIN + 1,
                 this.achievement.achieved() ? 0xFFA9D98A : -1);
-            graphics.text(font, fit(font, this.achievement.description(), width - SLOT_MARGIN * 2), SLOT_MARGIN,
+            graphics.text(font, fit(font, this.achievement.description(), width - textX - SLOT_MARGIN), textX,
                 SLOT_MARGIN + font.lineHeight + 4, 0xFFB8B8B8);
             if (!score.isEmpty()) {
                 graphics.text(font, score, width - SLOT_MARGIN - font.width(score), SLOT_MARGIN + 1, 0xFFDDBD6D);

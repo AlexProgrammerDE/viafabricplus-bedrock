@@ -104,9 +104,17 @@ public final class BedrockProfileService {
                                 }
                             }
                         }
+                        String iconUrl = "";
+                        for (final JsonElement mediaElement : array(achievement, "mediaAssets")) {
+                            final JsonObject media = mediaElement.getAsJsonObject();
+                            if ("Icon".equalsIgnoreCase(string(media, "type"))) {
+                                iconUrl = string(media, "url");
+                                break;
+                            }
+                        }
                         achievements.add(new Achievement(string(achievement, "id"), string(achievement, "name"),
                             achieved ? string(achievement, "description") : string(achievement, "lockedDescription"),
-                            achieved, gamerscore, string(object(achievement, "progression"), "timeUnlocked")));
+                            achieved, gamerscore, string(object(achievement, "progression"), "timeUnlocked"), iconUrl));
                     }
                     continuation = string(object(data, "pagingInfo"), "continuationToken");
                     if (continuation.isBlank()) {
@@ -207,7 +215,7 @@ public final class BedrockProfileService {
     }
 
     public record Achievement(String id, String name, String description, boolean achieved, int gamerscore,
-                              String unlockedAt) {
+                              String unlockedAt, String iconUrl) {
     }
 
     public enum Statistic {
