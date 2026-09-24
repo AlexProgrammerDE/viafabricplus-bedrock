@@ -14,23 +14,46 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import org.jetbrains.annotations.Nullable;
 
-/** Finds Realm event illustrations in an installed Bedrock client, without distributing its artwork. */
-public final class BedrockEventArt {
+/** Renders artwork from a locally installed Bedrock client without bundling its assets. */
+public final class BedrockUiArt {
 
+    private static final Pattern ASSET_NAME = Pattern.compile("(.+)-[a-f0-9]{16,}\\.(?:png|jpe?g)");
     private static final Map<String, Path> ART = findArt();
 
-    private BedrockEventArt() {
+    private BedrockUiArt() {
     }
 
-    public static boolean draw(final GuiGraphicsExtractor graphics, final String event,
-                               final int x, final int y, final int width, final int height) {
-        final Path path = ART.get(event);
+    public static boolean drawEvent(final GuiGraphicsExtractor graphics, final String event,
+                                    final int x, final int y, final int width, final int height) {
+        return draw(graphics, event, x, y, width, height);
+    }
+
+    public static boolean drawRealmsLogo(final GuiGraphicsExtractor graphics,
+                                         final int x, final int y, final int width, final int height) {
+        return draw(graphics, "RealmsTitleImage", x, y, width, height);
+    }
+
+    public static boolean drawRealmPreview(final GuiGraphicsExtractor graphics,
+                                           final int x, final int y, final int width, final int height) {
+        return draw(graphics, "Realms_Default_Thumbnail_3840", x, y, width, height)
+            || draw(graphics, "realms_default_image", x, y, width, height);
+    }
+
+    public static boolean drawBackdrop(final GuiGraphicsExtractor graphics, final int width, final int height) {
+        return draw(graphics, "background-main", 0, 0, width, height);
+    }
+
+    private static boolean draw(final GuiGraphicsExtractor graphics, final String asset,
+                                final int x, final int y, final int width, final int height) {
+        final Path path = ART.get(asset);
         return path != null && BedrockImageCache.drawLocal(graphics, path, x, y, width, height);
     }
 
@@ -38,10 +61,12 @@ public final class BedrockEventArt {
         final Path assets = assetFolder();
         if (assets == null) return Map.of();
         try (Stream<Path> files = Files.list(assets)) {
-            return files.filter(Files::isRegularFile)
-                .filter(path -> path.getFileName().toString().matches("[A-Za-z][A-Za-z0-9]+-[a-f0-9]+\\.png"))
-                .collect(Collectors.toMap(path -> path.getFileName().toString().split("-")[0],
-                    path -> path, (first, second) -> first));
+            final Map<String, Path> art = new HashMap<>();
+            files.filter(Files::isRegularFile).forEach(path -> {
+                final Matcher name = ASSET_NAME.matcher(path.getFileName().toString());
+                if (name.matches()) art.putIfAbsent(name.group(1), path);
+            });
+            return Map.copyOf(art);
         } catch (IOException exception) {
             return Map.of();
         }

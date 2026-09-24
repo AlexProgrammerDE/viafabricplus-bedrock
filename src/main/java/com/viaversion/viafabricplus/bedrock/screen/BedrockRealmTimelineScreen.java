@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -99,6 +100,15 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
         // The heading belongs to the illustration panel.
+    }
+
+    @Override
+    public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY,
+                                  final float partialTick) {
+        super.extractBackground(graphics, mouseX, mouseY, partialTick);
+        if (BedrockUiArt.drawBackdrop(graphics, this.width, this.height)) {
+            graphics.fill(0, 0, this.width, this.height, 0x88303040);
+        }
     }
 
     @Override

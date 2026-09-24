@@ -63,16 +63,16 @@ public final class BedrockImageCache {
             final HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() != 200) throw new IOException("Xbox image returned HTTP " + response.statusCode());
             return response.body();
-        }, x, y, width, height);
+        }, false, x, y, width, height);
     }
 
     public static boolean drawLocal(final GuiGraphicsExtractor graphics, final Path path, final int x,
                                     final int y, final int width, final int height) {
-        return draw(graphics, path.toUri().toString(), () -> Files.readAllBytes(path), x, y, width, height);
+        return draw(graphics, path.toUri().toString(), () -> Files.readAllBytes(path), true, x, y, width, height);
     }
 
     private static boolean draw(final GuiGraphicsExtractor graphics, final String key, final ImageSource source,
-                                final int x, final int y, final int width, final int height) {
+                                final boolean installedArt, final int x, final int y, final int width, final int height) {
         final Image image = IMAGES.get(key);
         if (image != null) {
             int sourceWidth = image.width();
@@ -94,9 +94,25 @@ public final class BedrockImageCache {
                     final byte[] bytes = source.read();
                     if (bytes.length > MAX_BYTES) throw new IOException("Image is too large");
                     final NativeImage pixels = NativeImage.read(bytes);
-                    if (pixels.getWidth() > 2048 || pixels.getHeight() > 2048) {
+                    final int limit = installedArt ? 4096 : 2048;
+                    if (pixels.getWidth() > limit || pixels.getHeight() > limit) {
                         pixels.close();
                         throw new IOException("Image dimensions are too large");
+                    }
+                    if (pixels.getWidth() > 2048 || pixels.getHeight() > 2048) {
+                        final int longest = Math.max(pixels.getWidth(), pixels.getHeight());
+                        final int scaledWidth = Math.max(1, pixels.getWidth() * 2048 / longest);
+                        final int scaledHeight = Math.max(1, pixels.getHeight() * 2048 / longest);
+                        final NativeImage scaled = new NativeImage(pixels.format(), scaledWidth, scaledHeight, false);
+                        try {
+                            pixels.resizeSubRectTo(0, 0, pixels.getWidth(), pixels.getHeight(), scaled);
+                            return scaled;
+                        } catch (Exception exception) {
+                            scaled.close();
+                            throw exception;
+                        } finally {
+                            pixels.close();
+                        }
                     }
                     return pixels;
                 } catch (Exception exception) {

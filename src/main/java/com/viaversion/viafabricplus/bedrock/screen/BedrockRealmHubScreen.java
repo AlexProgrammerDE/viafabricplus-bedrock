@@ -30,8 +30,8 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmHubService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRelativeTime;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockEventArt;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -240,6 +240,15 @@ public final class BedrockRealmHubScreen extends VFPScreen {
         graphics.pose().scale(1.5F, 1.5F);
         graphics.centeredText(this.font, this.title, this.width / 3, 8, ACCENT_COLOR);
         graphics.pose().popMatrix();
+    }
+
+    @Override
+    public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY,
+                                  final float partialTick) {
+        super.extractBackground(graphics, mouseX, mouseY, partialTick);
+        if (BedrockUiArt.drawBackdrop(graphics, this.width, this.height)) {
+            graphics.fill(0, 0, this.width, this.height, 0x88303040);
+        }
     }
 
     private void addSubtabs(final int count, final java.util.function.IntFunction<String> label,
@@ -914,7 +923,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 || this.kind.equals("summary") && this.id.matches("[0-9]+");
             final int textX = portrait ? 42 : 7;
             if (this.kind.equals("story")) {
-                if (!BedrockEventArt.draw(graphics, this.title.replace(" ", ""), 5, 3, 30, 30)) {
+                if (!BedrockUiArt.drawEvent(graphics, this.title.replace(" ", ""), 5, 3, 30, 30)) {
                     graphics.item(STORY_FALLBACK, 12, 10);
                 }
             } else if (portrait) {
