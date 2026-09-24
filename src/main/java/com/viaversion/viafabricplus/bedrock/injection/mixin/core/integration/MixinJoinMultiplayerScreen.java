@@ -28,7 +28,6 @@ import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.injection.access.IServerAddress;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.NetherNetAddressParser;
-import com.viaversion.viafabricplus.bedrock.settings.BedrockSettings;
 import com.viaversion.viafabricplus.injection.access.core.IServerData;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import java.net.SocketAddress;

@@ -5,8 +5,13 @@ import de.florianreuth.baseproject.setupProject
 import de.florianreuth.baseproject.setupViaPublishing
 
 plugins {
+    checkstyle
     id("net.fabricmc.fabric-loom")
     id("de.florianreuth.baseproject")
+}
+
+checkstyle {
+    toolVersion = "12.3.1"
 }
 
 setupProject()
