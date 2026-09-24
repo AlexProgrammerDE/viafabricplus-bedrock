@@ -33,7 +33,6 @@ import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyService.Member;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyService.Party;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import java.util.List;
@@ -126,9 +125,9 @@ public final class BedrockPartyScreen extends VFPScreen {
             this.font.lineHeight * 2 + 12));
         if (this.view == View.CHAT) {
             final int fieldWidth = Math.min(350, this.width - 28);
-            this.chatInput = this.addRenderableWidget(new EditBox(this.font, (this.width - fieldWidth) / 2,
+            this.chatInput = this.addRenderableWidget(new SubmitEditBox(this.font, (this.width - fieldWidth) / 2,
                 this.height - FOOTER_HEIGHT - 25, fieldWidth, 20,
-                Component.translatable("bedrock_party.viafabricplus.message")));
+                Component.translatable("bedrock_party.viafabricplus.message"), this::sendChat));
             this.chatInput.setHint(Component.translatable("bedrock_party.viafabricplus.message"));
             this.chatInput.setMaxLength(256);
         } else {
@@ -497,7 +496,8 @@ public final class BedrockPartyScreen extends VFPScreen {
 
     private void sendChat() {
         final BedrockAuthManager account = this.account();
-        if (account == null || this.chatInput == null || this.busy) {
+        if (account == null || this.chatInput == null || this.chatInput.getValue().isBlank() || this.busy
+            || BedrockPartyService.current(account) == null || !BedrockPartyService.chatConnected(account)) {
             return;
         }
         final String message = this.chatInput.getValue();
@@ -576,7 +576,7 @@ public final class BedrockPartyScreen extends VFPScreen {
         return Component.translatable("bedrock_party.viafabricplus.player").getString();
     }
 
-    private final class PartyList extends VFPList {
+    private final class PartyList extends ActionList {
 
         private PartyList(final Minecraft minecraft, final int width, final int height, final int top, final int bottom,
                           final int entryHeight) {
@@ -588,6 +588,25 @@ public final class BedrockPartyScreen extends VFPScreen {
                 case INVITE -> this.friendEntries();
                 case CHAT -> this.chatEntries();
             }
+        }
+
+        @Override
+        protected boolean activate(final VFPListEntry entry) {
+            if (BedrockPartyScreen.this.busy) {
+                return false;
+            }
+            final BedrockAuthManager account = BedrockPartyScreen.this.account();
+            final boolean inParty = account != null && BedrockPartyService.current(account) != null;
+            if (BedrockPartyScreen.this.view == View.FIND && entry instanceof PartyEntry && !inParty) {
+                BedrockPartyScreen.this.join();
+            } else if (BedrockPartyScreen.this.view == View.INVITES && entry instanceof InviteEntry && !inParty) {
+                BedrockPartyScreen.this.acceptInvite();
+            } else if (BedrockPartyScreen.this.view == View.INVITE && entry instanceof FriendEntry && inParty) {
+                BedrockPartyScreen.this.invite();
+            } else {
+                return false;
+            }
+            return true;
         }
 
         private void findEntries() {

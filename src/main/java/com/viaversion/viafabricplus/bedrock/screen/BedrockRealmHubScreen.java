@@ -34,7 +34,6 @@ import com.viaversion.viafabricplus.bedrock.visual.BedrockEventImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockRealmImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import java.time.Instant;
@@ -212,7 +211,21 @@ public final class BedrockRealmHubScreen extends VFPScreen {
             case WORLD, SETTINGS -> this.world != null && "OPEN".equals(string(this.world, "state"))
                 ? "Close Realm" : "Open Realm";
         }));
-        this.primaryButton.active = !this.busy && switch (this.tab) {
+        this.primaryButton.active = this.primaryActionAvailable(selected);
+        this.secondaryButton.active = !this.busy && this.world != null
+            && (this.tab == Tab.TIMELINE || owner && (this.tab == Tab.COMMUNITY
+                || this.tab == Tab.WORLD && this.worldTab == World.OVERVIEW));
+        this.secondaryButton.visible = this.tab == Tab.COMMUNITY && this.community == Community.MEMBERS
+            || this.tab == Tab.WORLD && this.worldTab == World.OVERVIEW || this.tab == Tab.TIMELINE;
+        this.removeButton.active = !this.busy && owner && selected != null && selected.kind.equals("member")
+            && !selected.id.equals(this.realm.getOwnerUid());
+        this.refreshButton.active = !this.busy && !this.worldLoading && !this.storiesLoading
+            && !this.activityLoading && !this.settingsLoading && !this.backupsLoading;
+    }
+
+    private boolean primaryActionAvailable(final @Nullable HubEntry selected) {
+        final boolean owner = this.isOwner();
+        return !this.busy && switch (this.tab) {
             case COMMUNITY -> owner && selected != null && selected.kind.equals("member")
                 && !selected.id.equals(this.realm.getOwnerUid());
             case TIMELINE -> this.storySettings != null;
@@ -224,15 +237,6 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 : this.storySettings != null && selected.kind.equals("setting")
                     && (selected.id.equals("notifications") || owner));
         };
-        this.secondaryButton.active = !this.busy && this.world != null
-            && (this.tab == Tab.TIMELINE || owner && (this.tab == Tab.COMMUNITY
-                || this.tab == Tab.WORLD && this.worldTab == World.OVERVIEW));
-        this.secondaryButton.visible = this.tab == Tab.COMMUNITY && this.community == Community.MEMBERS
-            || this.tab == Tab.WORLD && this.worldTab == World.OVERVIEW || this.tab == Tab.TIMELINE;
-        this.removeButton.active = !this.busy && owner && selected != null && selected.kind.equals("member")
-            && !selected.id.equals(this.realm.getOwnerUid());
-        this.refreshButton.active = !this.busy && !this.worldLoading && !this.storiesLoading
-            && !this.activityLoading && !this.settingsLoading && !this.backupsLoading;
     }
 
     @Override
@@ -862,7 +866,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
         return parent != null && parent.has(key) && parent.get(key).isJsonPrimitive() && parent.get(key).getAsBoolean();
     }
 
-    private final class HubList extends VFPList {
+    private final class HubList extends ActionList {
         private HubList(final Minecraft minecraft, final int width, final int height, final int top,
                         final int bottom, final int entryHeight) {
             super(minecraft, width, height, top, bottom, entryHeight);
@@ -874,6 +878,16 @@ public final class BedrockRealmHubScreen extends VFPScreen {
 
         private void append(final VFPListEntry entry) {
             this.addEntry(entry);
+        }
+
+        @Override
+        protected boolean activate(final VFPListEntry entry) {
+            if (entry instanceof HubEntry selected && BedrockRealmHubScreen.this.tab != Tab.TIMELINE
+                && BedrockRealmHubScreen.this.primaryActionAvailable(selected)) {
+                BedrockRealmHubScreen.this.primary();
+                return true;
+            }
+            return false;
         }
 
         @Override

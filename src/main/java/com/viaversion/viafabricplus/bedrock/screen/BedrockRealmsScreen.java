@@ -29,7 +29,6 @@ import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockRealmImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import com.viaversion.viafabricplus.util.network.ConnectionUtil;
@@ -97,7 +96,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
             this.load();
         }
 
-        this.list = this.addRenderableWidget(new SlotList(this.minecraft, this.width, this.height, CONTENT_TOP, FOOTER_HEIGHT,
+        this.list = this.addRenderableWidget(new SlotList(this, this.minecraft, this.width, this.height, CONTENT_TOP, FOOTER_HEIGHT,
             (this.font.lineHeight + 2) * 3 /* name, version and motd */));
         this.addRenderableOnly((graphics, mouseX, mouseY, delta) -> this.renderRealmDetails(graphics));
 
@@ -323,12 +322,15 @@ public final class BedrockRealmsScreen extends VFPScreen {
         return null;
     }
 
-    public static class SlotList extends VFPList {
+    public static class SlotList extends ActionList {
 
         private static double scrollAmount;
+        private final BedrockRealmsScreen screen;
 
-        public SlotList(final Minecraft minecraftClient, final int width, final int height, final int top, final int bottom, final int entryHeight) {
+        public SlotList(final BedrockRealmsScreen screen, final Minecraft minecraftClient, final int width, final int height,
+                        final int top, final int bottom, final int entryHeight) {
             super(minecraftClient, width, height, top, bottom, entryHeight);
+            this.screen = screen;
 
             if (realmsServers == null) { // The realms are either still loading, unavailable or the request failed
                 this.addEntry(new VFPTextEntry(status));
@@ -347,6 +349,15 @@ public final class BedrockRealmsScreen extends VFPScreen {
         @Override
         public int getRowWidth() {
             return Math.min(ROW_WIDTH, this.width - 20);
+        }
+
+        @Override
+        protected boolean activate(final VFPListEntry entry) {
+            if (entry instanceof SlotEntry realm && !this.screen.joining) {
+                this.screen.join(realm.realmsServer);
+                return true;
+            }
+            return false;
         }
 
         @Override

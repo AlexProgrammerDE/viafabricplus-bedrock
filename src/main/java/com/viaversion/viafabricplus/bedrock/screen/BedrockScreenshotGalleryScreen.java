@@ -25,7 +25,6 @@ import com.mojang.blaze3d.Blaze3D;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import java.io.IOException;
@@ -121,7 +120,7 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
         }
     }
 
-    private final class GalleryList extends VFPList {
+    private final class GalleryList extends ActionList {
 
         private GalleryList(final Minecraft minecraft, final int width, final int height, final int top,
                             final int bottom, final int entryHeight) {
@@ -138,6 +137,15 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
         @Override
         public int getRowWidth() {
             return Math.min(352, this.width - 20);
+        }
+
+        @Override
+        protected boolean activate(final VFPListEntry entry) {
+            if (entry instanceof ScreenshotEntry screenshot && Files.isRegularFile(screenshot.path)) {
+                BedrockScreenshotGalleryScreen.this.openSelected();
+                return true;
+            }
+            return false;
         }
 
     }

@@ -53,8 +53,8 @@ public final class BedrockRealmInviteScreen extends VFPScreen {
     protected void init() {
         super.init();
         final int fieldWidth = Math.min(300, this.width - 40);
-        this.gamertag = this.addRenderableWidget(new EditBox(this.font, (this.width - fieldWidth) / 2,
-            this.height / 2 - 10, fieldWidth, 20, Component.literal("Xbox gamertag")));
+        this.gamertag = this.addRenderableWidget(new SubmitEditBox(this.font, (this.width - fieldWidth) / 2,
+            this.height / 2 - 10, fieldWidth, 20, Component.literal("Xbox gamertag"), this::find));
         this.gamertag.setMaxLength(32);
         this.gamertag.setHint(Component.literal("Exact Xbox gamertag"));
         this.inviteButton = Button.builder(Component.literal("Find and invite"), _ -> this.find()).build();
@@ -77,9 +77,9 @@ public final class BedrockRealmInviteScreen extends VFPScreen {
     }
 
     private void find() {
-        if (this.busy) return;
-        this.busy = true;
+        if (this.busy || this.gamertag.getValue().isBlank()) return;
         final String query = this.gamertag.getValue().strip();
+        this.busy = true;
         BedrockSocialService.search(this.account, query).whenComplete((results, error) ->
             Minecraft.getInstance().execute(() -> {
                 this.busy = false;

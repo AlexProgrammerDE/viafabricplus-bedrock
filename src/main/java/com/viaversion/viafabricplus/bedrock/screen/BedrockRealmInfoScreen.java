@@ -54,12 +54,12 @@ public final class BedrockRealmInfoScreen extends VFPScreen {
         super.init();
         final int fieldWidth = Math.min(340, this.width - 40);
         final int left = (this.width - fieldWidth) / 2;
-        this.name = this.addRenderableWidget(new EditBox(this.font, left, this.height / 2 - 32,
-            fieldWidth, 20, Component.literal("Realm name")));
+        this.name = this.addRenderableWidget(new SubmitEditBox(this.font, left, this.height / 2 - 32,
+            fieldWidth, 20, Component.literal("Realm name"), this::save));
         this.name.setMaxLength(32);
         this.name.setValue(this.initialName);
-        this.description = this.addRenderableWidget(new EditBox(this.font, left, this.height / 2 + 15,
-            fieldWidth, 20, Component.literal("Realm description")));
+        this.description = this.addRenderableWidget(new SubmitEditBox(this.font, left, this.height / 2 + 15,
+            fieldWidth, 20, Component.literal("Realm description"), this::save));
         this.description.setMaxLength(255);
         this.description.setValue(this.initialDescription);
         this.saveButton = Button.builder(Component.literal("Save"), _ -> this.save()).build();

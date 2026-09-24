@@ -31,7 +31,6 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.BedrockConnectionUtil;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
 import com.viaversion.viafabricplus.screen.base.list.VFPTextEntry;
 import java.util.Comparator;
@@ -126,8 +125,8 @@ public final class BedrockFriendsScreen extends VFPScreen {
         if (this.view == View.SEARCH) {
             final int width = Math.min(230, this.width - 100);
             final int x = (this.width - width - 72) / 2;
-            final EditBox field = this.addRenderableWidget(new EditBox(this.font, x, DETAILS_TOP - 4, width, 20,
-                Component.translatable("bedrock_friends.viafabricplus.search_hint")));
+            final EditBox field = this.addRenderableWidget(new SubmitEditBox(this.font, x, DETAILS_TOP - 4, width, 20,
+                Component.translatable("bedrock_friends.viafabricplus.search_hint"), this::search));
             field.setHint(Component.translatable("bedrock_friends.viafabricplus.search_hint"));
             field.setValue(this.query);
             field.setResponder(value -> this.query = value.trim());
@@ -506,7 +505,7 @@ public final class BedrockFriendsScreen extends VFPScreen {
         return null;
     }
 
-    private final class SlotList extends VFPList {
+    private final class SlotList extends ActionList {
 
         private static double scrollAmount;
 
@@ -520,6 +519,23 @@ public final class BedrockFriendsScreen extends VFPScreen {
                 case PARTY -> { }
             }
             this.setScrollAmount(scrollAmount);
+        }
+
+        @Override
+        protected boolean activate(final VFPListEntry entry) {
+            if (entry instanceof WorldEntry || entry instanceof UserEntry && BedrockFriendsScreen.this.selectedWorld() != null) {
+                if (BedrockFriendsScreen.this.joining || BedrockFriendsScreen.this.mutating
+                    || Minecraft.getInstance().getConnection() != null) {
+                    return false;
+                }
+                BedrockFriendsScreen.this.join();
+                return true;
+            }
+            if (entry instanceof UserEntry) {
+                BedrockFriendsScreen.this.showProfile();
+                return true;
+            }
+            return false;
         }
 
         private void addFriends() {
