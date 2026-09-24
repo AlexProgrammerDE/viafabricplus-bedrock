@@ -34,11 +34,15 @@ import org.cube.converter.model.element.Cube;
 import org.cube.converter.model.element.Parent;
 import org.cube.converter.model.impl.bedrock.BedrockGeometryModel;
 import org.cube.converter.util.element.UVMap;
+import org.cube.converter.util.element.UVMap.UVType;
 
 /** Builds client models from the geometry that ViaBedrock has already parsed. */
 public final class BedrockGeometry {
 
     private static final float DEGREES_TO_RADIANS = (float) (Math.PI / 180D);
+    private static final List<Direction> CUBE_FACES = List.of(
+        Direction.DOWN, Direction.UP, Direction.WEST, Direction.NORTH, Direction.EAST, Direction.SOUTH
+    );
     private static final List<String> PLAYER_PARTS = List.of("head", "body", "right_arm", "left_arm", "right_leg", "left_leg");
     private static final Map<String, String> PLAYER_OVERLAYS = Map.of(
         "hat", "head", "jacket", "body", "right_sleeve", "right_arm", "left_sleeve", "left_arm",
@@ -138,7 +142,7 @@ public final class BedrockGeometry {
         final UVMap uv = cube.getUvMap();
         final Set<Direction> faces = EnumSet.noneOf(Direction.class);
         for (Direction direction : Direction.values()) {
-            if (uv.getUvMap().containsKey(org.cube.converter.util.element.Direction.valueOf(direction.name()))) {
+            if (uv.getUvMap().containsKey(sourceFace(uv, direction))) {
                 faces.add(direction);
             }
         }
@@ -152,35 +156,36 @@ public final class BedrockGeometry {
     }
 
     private static void setFaceUvs(final ModelPart.Cube cube, final UVMap uv, final Set<Direction> faces, final float width, final float height, final boolean mirror) {
-        final float x = cube.minX;
-        final float y = cube.minY;
-        final float z = cube.minZ;
-        final float maxX = cube.maxX;
-        final float maxY = cube.maxY;
-        final float maxZ = cube.maxZ;
-        final ModelPart.Vertex v0 = new ModelPart.Vertex(x, y, z, 0, 0);
-        final ModelPart.Vertex v1 = new ModelPart.Vertex(maxX, y, z, 0, 0);
-        final ModelPart.Vertex v2 = new ModelPart.Vertex(maxX, maxY, z, 0, 0);
-        final ModelPart.Vertex v3 = new ModelPart.Vertex(x, maxY, z, 0, 0);
-        final ModelPart.Vertex v4 = new ModelPart.Vertex(x, y, maxZ, 0, 0);
-        final ModelPart.Vertex v5 = new ModelPart.Vertex(maxX, y, maxZ, 0, 0);
-        final ModelPart.Vertex v6 = new ModelPart.Vertex(maxX, maxY, maxZ, 0, 0);
-        final ModelPart.Vertex v7 = new ModelPart.Vertex(x, maxY, maxZ, 0, 0);
-        final Map<Direction, ModelPart.Vertex[]> vertices = Map.of(
-            Direction.DOWN, new ModelPart.Vertex[]{v5, v4, v0, v1},
-            Direction.UP, new ModelPart.Vertex[]{v2, v3, v7, v6},
-            Direction.WEST, new ModelPart.Vertex[]{v0, v4, v7, v3},
-            Direction.NORTH, new ModelPart.Vertex[]{v1, v0, v3, v2},
-            Direction.EAST, new ModelPart.Vertex[]{v5, v1, v2, v6},
-            Direction.SOUTH, new ModelPart.Vertex[]{v4, v5, v6, v7}
-        );
         int index = 0;
-        for (Direction direction : Direction.values()) {
+        for (Direction direction : CUBE_FACES) {
             if (faces.contains(direction)) {
-                final Float[] face = uv.getUvMap().get(org.cube.converter.util.element.Direction.valueOf(direction.name()));
-                cube.polygons[index++] = new ModelPart.Polygon(vertices.get(direction), face[0], face[1], face[2], face[3], width, height, mirror, direction);
+                final ModelPart.Vertex[] vertices = cube.polygons[index].vertices().clone();
+                if (mirror) {
+                    for (int i = 0; i < vertices.length / 2; i++) {
+                        final ModelPart.Vertex opposite = vertices[vertices.length - 1 - i];
+                        vertices[vertices.length - 1 - i] = vertices[i];
+                        vertices[i] = opposite;
+                    }
+                }
+                final Float[] face = uv.getUvMap().get(sourceFace(uv, direction));
+                final boolean rotate = uv.getUvType() == UVType.BOX && (direction == Direction.DOWN || direction == Direction.UP);
+                cube.polygons[index++] = new ModelPart.Polygon(vertices,
+                    rotate ? face[2] : face[0], rotate ? face[3] : face[1],
+                    rotate ? face[0] : face[2], rotate ? face[1] : face[3],
+                    width, height, mirror, direction);
             }
         }
+    }
+
+    private static org.cube.converter.util.element.Direction sourceFace(final UVMap uv, final Direction direction) {
+        final Direction source = uv.getUvType() == UVType.BOX ? switch (direction) {
+            case DOWN -> Direction.UP;
+            case UP -> Direction.DOWN;
+            case WEST -> Direction.EAST;
+            case EAST -> Direction.WEST;
+            default -> direction;
+        } : direction;
+        return org.cube.converter.util.element.Direction.valueOf(source.name());
     }
 
     private static String playerPartName(final String name) {
