@@ -38,6 +38,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
+import net.raphimc.minecraftauth.util.holder.Holder;
+import net.raphimc.minecraftauth.xbl.model.XblTitleToken;
+import net.raphimc.minecraftauth.xbl.model.XblXstsToken;
+import net.raphimc.minecraftauth.xbl.request.XblXstsAuthorizeRequest;
 import org.jetbrains.annotations.Nullable;
 
 /** Minecraft Bedrock party REST operations. Chat uses the separate signaling connection. */
@@ -51,6 +55,8 @@ public final class BedrockPartyService {
     private static volatile @Nullable Party current;
     private static volatile @Nullable BedrockAuthManager currentAccount;
     private static volatile @Nullable BedrockPartyChat chat;
+    private static volatile @Nullable BedrockAuthManager searchTokenAccount;
+    private static volatile @Nullable Holder<XblXstsToken> searchToken;
 
     private BedrockPartyService() {
     }
@@ -73,7 +79,7 @@ public final class BedrockPartyService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 final JsonObject body = new JsonObject();
-                body.addProperty("xboxToken", account.getPlayFabXstsToken().getUpToDate().getAuthorizationHeader());
+                body.addProperty("xboxToken", searchToken(account).getAuthorizationHeader());
                 body.addProperty("maxResults", 50);
                 body.addProperty("includeFullParties", false);
                 final JsonObject response = partyRequest(account, "party/findJoinable", body);
@@ -337,6 +343,26 @@ public final class BedrockPartyService {
             throw new IOException("Invalid party ID");
         }
         return value;
+    }
+
+    private static XblXstsToken searchToken(final BedrockAuthManager account) throws IOException {
+        Holder<XblXstsToken> holder = searchToken;
+        if (searchTokenAccount != account || holder == null) {
+            synchronized (BedrockPartyService.class) {
+                if (searchTokenAccount != account || searchToken == null) {
+                    searchToken = new Holder<>(() -> {
+                        final XblTitleToken title = account.getMsaApplicationConfig().isTitleClientId()
+                            ? account.getXblTitleToken().getUpToDate() : null;
+                        return account.getHttpClient().executeAndHandle(new XblXstsAuthorizeRequest(
+                            account.getXblDeviceToken().getUpToDate(), account.getXblUserToken().getUpToDate(),
+                            title, "http://playfab.xboxlive.com/"));
+                    });
+                    searchTokenAccount = account;
+                }
+                holder = searchToken;
+            }
+        }
+        return holder.getUpToDate();
     }
 
     private static JsonObject partyRequest(final BedrockAuthManager account, final String path, final @Nullable JsonObject body)

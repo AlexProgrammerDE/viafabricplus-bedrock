@@ -46,6 +46,7 @@ public final class BedrockSocialService {
 
     private static final URI PEOPLE = URI.create("https://peoplehub.xboxlive.com/users/me/people/");
     private static final URI SOCIAL = URI.create("https://social.xboxlive.com/users/me/people/friends/v2/");
+    private static final URI FAVORITES = URI.create("https://social.xboxlive.com/users/me/people/favorites/xuids");
     private static final URI PROFILES = URI.create("https://profile.xboxlive.com/users/batch/profile/settings");
     private static final String DECORATIONS = "/decoration/bio,detail,multiplayerSummary,preferredColor,presenceDetail";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -121,11 +122,11 @@ public final class BedrockSocialService {
                 final com.google.gson.JsonArray xuids = new com.google.gson.JsonArray();
                 xuids.add(xuid);
                 body.add("xuids", xuids);
-                final HttpRequest request = HttpRequest.newBuilder(PEOPLE.resolve("favorites/xuids?method=" + (add ? "add" : "remove")))
+                final HttpRequest request = HttpRequest.newBuilder(URI.create(FAVORITES + "?method=" + (add ? "add" : "remove")))
                     .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.ofSeconds(15))
                     .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
-                    .header("X-Xbl-Contract-Version", "7")
+                    .header("X-Xbl-Contract-Version", "1")
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body.toString()))

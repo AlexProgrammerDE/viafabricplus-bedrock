@@ -769,7 +769,7 @@ public final class BedrockPartyScreen extends VFPScreen {
 
     }
 
-    private static final class ChatEntry extends TextRow {
+    private final class ChatEntry extends TextRow {
 
         private final BedrockPartyChat.Message message;
 
@@ -779,7 +779,8 @@ public final class BedrockPartyScreen extends VFPScreen {
 
         @Override
         protected String title() {
-            return this.message.sender();
+            final String sender = this.message.sender();
+            return sender.matches("[0-9]+") ? BedrockPartyScreen.this.name(sender) : sender;
         }
 
         @Override

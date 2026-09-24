@@ -100,10 +100,8 @@ public final class BedrockPartyChat implements WebSocket.Listener {
         final JsonObject params = new JsonObject();
         params.addProperty("partyId", this.partyId);
         params.addProperty("message", text);
-        return this.sendRpc("PartyChat_SendChat_v1_0", params).thenAccept(_ -> {
-            final String name = ViaFabricPlusBedrock.impl().account().displayName();
-            this.add(new Message(name == null ? "You" : name, text, Instant.now()));
-        });
+        // The signaling service echoes the message to the sender.
+        return this.sendRpc("PartyChat_SendChat_v1_0", params).thenApply(_ -> null);
     }
 
     public void close() {
