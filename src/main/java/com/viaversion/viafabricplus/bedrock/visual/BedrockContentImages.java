@@ -34,7 +34,8 @@ public final class BedrockContentImages {
             case MOBS_DEFEATED -> "sword";
             case DISTANCE_TRAVELED -> "boots";
         };
-        BedrockImageCache.drawBundled(graphics, RESOURCE_ROOT + icon + "@0.5x.icon.png", x, y, size, size);
+        BedrockImageCache.drawBundledSilhouette(graphics, RESOURCE_ROOT + icon + "@0.5x.icon.png",
+            0xFFE0E0E0, x, y, size);
     }
 
 }
