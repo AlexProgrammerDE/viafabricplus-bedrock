@@ -23,6 +23,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockContentImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -100,6 +101,14 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
             }
             graphics.text(this.font, line, left, y, this.failed ? 0xFFFF5555 : -1);
             y += this.font.lineHeight + 3;
+        }
+        final int imageTop = y + 12;
+        final int maxHeight = this.height - FOOTER_HEIGHT - imageTop - 8;
+        if (maxHeight >= 90) {
+            final int imageWidth = Math.min(textWidth, Math.min(420, maxHeight * 16 / 9));
+            final int imageHeight = imageWidth * 9 / 16;
+            BedrockContentImages.drawTimelineExample(graphics, (this.width - imageWidth) / 2,
+                imageTop, imageWidth, imageHeight);
         }
     }
 
