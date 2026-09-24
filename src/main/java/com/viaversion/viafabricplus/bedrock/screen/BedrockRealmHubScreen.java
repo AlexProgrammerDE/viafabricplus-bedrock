@@ -30,6 +30,7 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmHubService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRelativeTime;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockEventImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockRealmImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
@@ -919,11 +920,15 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 return;
             }
             if (this.kind.equals("story")) {
-                graphics.text(font, clip(font, this.title, width - 14), 7, 4, color);
-                graphics.text(font, clip(font, this.displayDetail(), width - 14), 7,
+                final String event = this.title.replace(" ", "");
+                final boolean hasImage = BedrockEventImages.hasImage(event);
+                final int textX = hasImage ? 67 : 7;
+                if (hasImage) BedrockEventImages.draw(graphics, event, 5, (height - 32) / 2, 56, 32);
+                graphics.text(font, clip(font, this.title, width - textX - 7), textX, 4, color);
+                graphics.text(font, clip(font, this.displayDetail(), width - textX - 7), textX,
                     7 + font.lineHeight, SECONDARY);
                 if (!this.description.isBlank()) {
-                    graphics.text(font, clip(font, this.description, width - 14), 7,
+                    graphics.text(font, clip(font, this.description, width - textX - 7), textX,
                         10 + font.lineHeight * 2, SECONDARY);
                 }
                 return;
