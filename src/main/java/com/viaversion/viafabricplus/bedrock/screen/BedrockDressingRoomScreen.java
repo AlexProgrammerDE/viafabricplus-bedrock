@@ -26,9 +26,13 @@ import com.viaversion.viafabricplus.bedrock.appearance.BedrockAppearanceStore.Se
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
@@ -40,11 +44,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
+import org.lwjgl.sdl.SDLDialog;
+import org.lwjgl.sdl.SDLError;
+import org.lwjgl.sdl.SDL_DialogFileCallback;
+import org.lwjgl.sdl.SDL_DialogFileFilter;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.nfd.NFDFilterItem;
-import org.lwjgl.util.nfd.NativeFileDialog;
 
 /** Selects a classic Bedrock skin and cape for the next connection. */
 public final class BedrockDressingRoomScreen extends VFPScreen {
@@ -53,6 +57,26 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
 
     private static final Identifier PREVIEW_TEXTURE = Identifier.fromNamespaceAndPath("viafabricplus-bedrock", "dressing_room/preview");
     private static final Identifier CAPE_PREVIEW_TEXTURE = Identifier.fromNamespaceAndPath("viafabricplus-bedrock", "dressing_room/cape");
+    private static final ByteBuffer PNG_FILTER_NAME = MemoryUtil.memUTF8("PNG images");
+    private static final ByteBuffer PNG_FILTER_PATTERN = MemoryUtil.memUTF8("png");
+    private static final SDL_DialogFileFilter.Buffer PNG_FILTER = SDL_DialogFileFilter.calloc(1);
+    private static final AtomicLong NEXT_DIALOG_ID = new AtomicLong();
+    private static final Map<Long, FileDialogRequest> OPEN_DIALOGS = new ConcurrentHashMap<>();
+    private static final SDL_DialogFileCallback FILE_DIALOG_CALLBACK = SDL_DialogFileCallback.create((dialogId, files, _) -> {
+        final FileDialogRequest request = OPEN_DIALOGS.remove(dialogId);
+        if (request == null) {
+            return;
+        }
+        final String error = files == 0 ? SDLError.SDL_GetError() : null;
+        final long firstFile = files == 0 ? 0 : MemoryUtil.memGetAddress(files);
+        final String selected = firstFile == 0 ? null : MemoryUtil.memUTF8(firstFile);
+        request.screen.minecraft.schedule(() -> request.screen.finishFileDialog(request.cape, selected, error));
+    });
+
+    static {
+        // SDL keeps the filter until the asynchronous file dialog callback completes.
+        PNG_FILTER.get(0).name(PNG_FILTER_NAME).pattern(PNG_FILTER_PATTERN);
+    }
 
     private final BedrockAppearanceStore store = ViaFabricPlusBedrock.impl().appearances();
     private final String accountId = BedrockAppearanceStore.accountId(ViaFabricPlusBedrock.impl().account().get());
@@ -65,6 +89,7 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
     private Button removeCapeButton;
     private boolean previewRegistered;
     private boolean capePreviewRegistered;
+    private boolean filePickerOpen;
 
     public BedrockDressingRoomScreen() {
         super(TITLE, true);
@@ -178,32 +203,34 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
     }
 
     private void chooseFile(final boolean cape) {
-        try {
-            if (NativeFileDialog.NFD_Init() != NativeFileDialog.NFD_OKAY) {
-                throw new IOException("Could not initialize the file picker: " + NativeFileDialog.NFD_GetError());
-            }
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                final PointerBuffer selected = stack.mallocPointer(1);
-                final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(1, stack);
-                filters.get(0).name(stack.UTF8("PNG images")).spec(stack.UTF8("png"));
-                final int result = NativeFileDialog.NFD_OpenDialog(selected, filters, (CharSequence) null);
-                if (result == NativeFileDialog.NFD_ERROR) {
-                    throw new IOException("Could not open the file picker: " + NativeFileDialog.NFD_GetError());
-                }
-                if (result == NativeFileDialog.NFD_OKAY) {
-                    final long nativePath = selected.get(0);
-                    try {
-                        this.importFile(Path.of(MemoryUtil.memUTF8(nativePath)), cape);
-                    } finally {
-                        NativeFileDialog.NFD_FreePath(nativePath);
-                    }
-                }
-            } finally {
-                NativeFileDialog.NFD_Quit();
-            }
-        } catch (IOException | RuntimeException | LinkageError e) {
-            this.failed(e instanceof IOException io ? io : new IOException("Could not open the file picker", e));
+        if (this.filePickerOpen) {
+            return;
         }
+        this.filePickerOpen = true;
+        final long dialogId = NEXT_DIALOG_ID.incrementAndGet();
+        OPEN_DIALOGS.put(dialogId, new FileDialogRequest(this, cape));
+        try {
+            SDLDialog.SDL_ShowOpenFileDialog(FILE_DIALOG_CALLBACK, dialogId, this.minecraft.getWindow().handle(), PNG_FILTER, (CharSequence) null, false);
+        } catch (RuntimeException | LinkageError e) {
+            OPEN_DIALOGS.remove(dialogId);
+            this.filePickerOpen = false;
+            this.failed(new IOException("Could not open the file picker", e));
+        }
+    }
+
+    private void finishFileDialog(final boolean cape, final String selected, final String error) {
+        this.filePickerOpen = false;
+        if (this.minecraft.gui.screen() != this) {
+            return;
+        }
+        if (error != null) {
+            this.failed(new IOException("Could not open the file picker: " + error));
+        } else if (selected != null) {
+            this.importFile(Path.of(selected), cape);
+        }
+    }
+
+    private record FileDialogRequest(BedrockDressingRoomScreen screen, boolean cape) {
     }
 
     private void importFile(final Path path, final boolean cape) {
