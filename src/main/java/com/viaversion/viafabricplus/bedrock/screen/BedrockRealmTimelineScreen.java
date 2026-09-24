@@ -22,7 +22,6 @@
 package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
-import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmTimelineService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import java.util.List;
@@ -31,27 +30,24 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
-import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsServer;
+import net.raphimc.minecraftauth.extra.realms.service.impl.BedrockRealmsService;
 import org.jspecify.annotations.NonNull;
 
 /** Explains the Realm's Timeline requirement before changing the member's own consent. */
 public final class BedrockRealmTimelineScreen extends VFPScreen {
 
-    private final BedrockAuthManager account;
+    private final BedrockRealmsService service;
     private final RealmsServer realm;
     private final Runnable join;
-    private Component status = Component.translatable("bedrock_realms.viafabricplus.timeline.loading");
-    private boolean requested;
-    private boolean checking;
-    private boolean optedIn;
-    private boolean failed;
+    private Component status = Component.translatable("bedrock_realms.viafabricplus.timeline.choice");
     private boolean saving;
+    private boolean failed;
     private Button actionButton;
 
-    public BedrockRealmTimelineScreen(final BedrockAuthManager account, final RealmsServer realm, final Runnable join) {
+    public BedrockRealmTimelineScreen(final BedrockRealmsService service, final RealmsServer realm, final Runnable join) {
         super(Component.translatable("bedrock_realms.viafabricplus.timeline.title"), true);
-        this.account = account;
+        this.service = service;
         this.realm = realm;
         this.join = join;
     }
@@ -61,19 +57,13 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
         this.actionButton = Button.builder(Component.empty(), _ -> this.act()).build();
         this.addFooter(this.actionButton, Button.builder(Component.translatable("bedrock_realms.viafabricplus.timeline.back"), _ -> this.onClose()).build());
         super.init();
-        if (!this.requested) {
-            this.requested = true;
-            this.check();
-        }
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.actionButton.active = !this.checking && !this.saving;
-        this.actionButton.setMessage(Component.translatable(this.failed ? "bedrock_realms.viafabricplus.timeline.retry"
-            : this.optedIn ? "bedrock_realms.viafabricplus.timeline.join"
-                : "bedrock_realms.viafabricplus.timeline.opt_in"));
+        this.actionButton.active = !this.saving;
+        this.actionButton.setMessage(Component.translatable("bedrock_realms.viafabricplus.timeline.opt_in"));
     }
 
     @Override
@@ -103,48 +93,24 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
     }
 
     private void act() {
-        if (this.failed) {
-            this.check();
-        } else if (this.optedIn) {
-            this.onClose();
-            this.join.run();
-        } else {
+        if (!this.saving) {
             this.optIn();
         }
     }
 
-    private void check() {
-        this.checking = true;
-        this.failed = false;
-        this.status = Component.translatable("bedrock_realms.viafabricplus.timeline.loading");
-        BedrockRealmTimelineService.isOptedIn(this.account, this.realm.getId()).whenComplete((optedIn, error) ->
-            Minecraft.getInstance().execute(() -> {
-                this.checking = false;
-                if (error != null) {
-                    ViaFabricPlusBedrock.impl().logger().error("Failed to load Realm Timeline consent", error);
-                    this.failed = true;
-                    this.status = BedrockRealmsError.describe(error);
-                    showToast(this.status);
-                } else {
-                    this.optedIn = optedIn;
-                    this.status = Component.translatable(optedIn ? "bedrock_realms.viafabricplus.timeline.already_in"
-                        : "bedrock_realms.viafabricplus.timeline.choice");
-                }
-            }));
-    }
-
     private void optIn() {
         this.saving = true;
+        this.failed = false;
         this.status = Component.translatable("bedrock_realms.viafabricplus.timeline.saving");
-        BedrockRealmTimelineService.optIn(this.account, this.realm.getId()).whenComplete((_, error) ->
+        this.service.updateWorldStorySettingsAsync(this.realm, null, true).whenComplete((_, error) ->
             Minecraft.getInstance().execute(() -> {
                 this.saving = false;
                 if (error != null) {
+                    this.failed = true;
                     ViaFabricPlusBedrock.impl().logger().error("Failed to opt in to Realm Timeline", error);
                     this.status = BedrockRealmsError.describe(error);
                     showToast(this.status);
                 } else {
-                    this.optedIn = true;
                     this.onClose();
                     this.join.run();
                 }

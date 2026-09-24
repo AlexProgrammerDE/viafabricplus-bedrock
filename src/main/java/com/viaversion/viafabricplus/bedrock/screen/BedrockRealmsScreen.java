@@ -189,7 +189,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
                 } else if (BedrockRealmsError.timelineOptInRequired(error)) {
                     final BedrockAuthManager account = ViaFabricPlusBedrock.impl().account().get();
                     if (account != null) {
-                        new BedrockRealmTimelineScreen(account, realmsServer, () -> this.join(realmsServer)).open(this);
+                        new BedrockRealmTimelineScreen(service, realmsServer, () -> this.join(realmsServer)).open(this);
                     } else {
                         this.fail("Bedrock account was removed while joining the realm", error);
                     }
