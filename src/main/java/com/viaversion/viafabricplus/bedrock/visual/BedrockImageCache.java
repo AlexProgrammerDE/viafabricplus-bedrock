@@ -18,6 +18,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -91,9 +92,14 @@ public final class BedrockImageCache {
             || host.equals("minecraft-services.net") || host.endsWith(".minecraft-services.net");
     }
 
-    public static boolean drawLocal(final GuiGraphicsExtractor graphics, final Path path, final int x,
-                                    final int y, final int width, final int height) {
-        return draw(graphics, path.toUri().toString(), () -> Files.readAllBytes(path), true, x, y, width, height);
+    public static boolean drawBundled(final GuiGraphicsExtractor graphics, final String resource,
+                                      final int x, final int y, final int width, final int height) {
+        return draw(graphics, resource, () -> {
+            try (InputStream stream = BedrockImageCache.class.getResourceAsStream(resource)) {
+                if (stream == null) throw new IOException("Bundled Bedrock image is missing");
+                return stream.readAllBytes();
+            }
+        }, true, x, y, width, height);
     }
 
     public static boolean drawScreenshot(final GuiGraphicsExtractor graphics, final Path path, final int x,
