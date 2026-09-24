@@ -40,20 +40,22 @@ import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
-/** The signed-in player's Minecraft for Windows Xbox achievements. */
+/** A player's Minecraft Xbox achievements across Bedrock platforms. */
 public final class BedrockAchievementsScreen extends VFPScreen {
 
     private enum Filter {
         ALL, LOCKED, COMPLETED
     }
 
+    private final String xuid;
     private Filter filter = Filter.ALL;
     private @Nullable List<Achievement> achievements;
     private boolean loading;
     private boolean failed;
 
-    public BedrockAchievementsScreen() {
-        super(Component.translatable("screen.viafabricplus.bedrock_achievements"), true);
+    public BedrockAchievementsScreen(final String xuid, final String playerName) {
+        super(Component.translatable("screen.viafabricplus.bedrock_player_achievements", playerName), true);
+        this.xuid = xuid;
     }
 
     @Override
@@ -95,7 +97,7 @@ public final class BedrockAchievementsScreen extends VFPScreen {
         }
         this.loading = true;
         this.failed = false;
-        BedrockProfileService.achievements(account).thenAcceptAsync(results -> {
+        BedrockProfileService.achievements(account, this.xuid).thenAcceptAsync(results -> {
             this.loading = false;
             if (ViaFabricPlusBedrock.impl().account().get() == account) {
                 this.achievements = results;

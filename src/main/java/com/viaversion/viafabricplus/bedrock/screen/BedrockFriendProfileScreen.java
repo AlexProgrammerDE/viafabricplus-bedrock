@@ -72,7 +72,7 @@ public final class BedrockFriendProfileScreen extends VFPScreen {
         if (this.self) {
             this.addFooter(
                 Button.builder(Component.translatable("bedrock_profile.viafabricplus.achievements"), _ ->
-                    new BedrockAchievementsScreen().open(this)).build(),
+                    new BedrockAchievementsScreen(this.user.xuid(), this.user.name()).open(this)).build(),
                 Button.builder(Component.translatable("bedrock_profile.viafabricplus.stats"), _ ->
                     new BedrockStatsScreen(this.user.xuid(), this.user.name(), true).open(this)).build(),
                 Button.builder(Component.translatable("bedrock_profile.viafabricplus.gallery"), _ ->
@@ -86,6 +86,8 @@ public final class BedrockFriendProfileScreen extends VFPScreen {
             this.relationshipButton = Button.builder(Component.empty(), _ -> this.changeFriend()).build();
             this.favoriteButton = Button.builder(Component.empty(), _ -> this.changeFavorite()).build();
             this.addFooter(this.relationshipButton, this.favoriteButton,
+                Button.builder(Component.translatable("bedrock_profile.viafabricplus.achievements"), _ ->
+                    new BedrockAchievementsScreen(this.user.xuid(), this.user.name()).open(this)).build(),
                 Button.builder(Component.translatable("bedrock_profile.viafabricplus.stats"), _ ->
                     new BedrockStatsScreen(this.user.xuid(), this.user.name(), false).open(this)).build(),
                 Button.builder(Component.translatable("bedrock_profile.viafabricplus.xbox_profile"), _ ->

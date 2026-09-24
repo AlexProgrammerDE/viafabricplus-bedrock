@@ -227,7 +227,7 @@ public final class BedrockStatsScreen extends VFPScreen {
             return Component.translatable("bedrock_stats.viafabricplus.time_value", minutes / 1440,
                 minutes / 60 % 24, minutes % 60).getString();
         }
-        return NumberFormat.getIntegerInstance(Locale.getDefault()).format(Math.round(value));
+        return NumberFormat.getIntegerInstance(Locale.getDefault()).format((long) value);
     }
 
 }

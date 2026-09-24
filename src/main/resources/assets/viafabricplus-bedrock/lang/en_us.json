@@ -172,7 +172,7 @@
   "bedrock_party.viafabricplus.member": "Member",
   "bedrock_party.viafabricplus.you": "You",
   "bedrock_party.viafabricplus.player": "Player",
-  "screen.viafabricplus.bedrock_achievements": "Minecraft achievements",
+  "screen.viafabricplus.bedrock_player_achievements": "%s's achievements",
   "bedrock_achievements.viafabricplus.all": "All",
   "bedrock_achievements.viafabricplus.locked": "Locked",
   "bedrock_achievements.viafabricplus.completed": "Completed",
