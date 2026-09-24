@@ -56,10 +56,10 @@ public final class BedrockFriendsScreen extends VFPScreen {
 
     public static final Component TITLE = Component.translatable("screen.viafabricplus.bedrock_friends");
 
-    private static final int TABS_TOP = 36;
-    private static final int DETAILS_TOP = 65;
-    private static final int LIST_TOP = 64;
-    private static final int SEARCH_LIST_TOP = 112;
+    private static final int TABS_TOP = 48;
+    private static final int DETAILS_TOP = 77;
+    private static final int LIST_TOP = 76;
+    private static final int SEARCH_LIST_TOP = 124;
     private static final int ROW_WIDTH = 352;
     private static final int SECONDARY_COLOR = 0xFFB8B8B8;
     private static final long REFRESH_INTERVAL = TimeUnit.MINUTES.toNanos(2);
@@ -184,10 +184,8 @@ public final class BedrockFriendsScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(2F, 2F);
-        graphics.centeredText(this.font, this.title, this.width / 4, 6, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     private void show(final View tab) {
@@ -654,9 +652,6 @@ public final class BedrockFriendsScreen extends VFPScreen {
                     ? this.user.gamertag() : this.user.presence();
             }
             final int titleY = detail.isBlank() ? (entryHeight - font.lineHeight) / 2 : SLOT_MARGIN + 1;
-            if (this.list.getFocused() == this) {
-                graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
-            }
             graphics.text(font, fit(font, this.user.name(), textWidth), textX, titleY,
                 this.list.getFocused() == this ? ACCENT_COLOR : -1);
             graphics.text(font, status, entryWidth - statusWidth - SLOT_MARGIN, titleY,
@@ -695,9 +690,6 @@ public final class BedrockFriendsScreen extends VFPScreen {
                 this.world.players(), this.world.maxPlayers()).getString();
             final int playersWidth = font.width(players);
             final int versionWidth = font.width(this.world.version());
-            if (this.list.getFocused() == this) {
-                graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
-            }
             graphics.text(font, fit(font, this.world.worldName(), entryWidth - playersWidth - textX - SLOT_MARGIN - 8),
                 textX, SLOT_MARGIN + 1, this.list.getFocused() == this ? ACCENT_COLOR : -1);
             graphics.text(font, players, entryWidth - playersWidth - SLOT_MARGIN, SLOT_MARGIN + 1, -1);

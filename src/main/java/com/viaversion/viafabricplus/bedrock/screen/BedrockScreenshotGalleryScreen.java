@@ -58,7 +58,7 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
 
     @Override
     protected void init() {
-        this.list = this.addRenderableWidget(new GalleryList(this.minecraft, this.width, this.height, 58,
+        this.list = this.addRenderableWidget(new GalleryList(this.minecraft, this.width, this.height, 60,
             FOOTER_HEIGHT, 54));
         this.openButton = Button.builder(Component.translatable("bedrock_gallery.viafabricplus.open"), _ -> this.openSelected()).build();
         this.addFooter(this.openButton,
@@ -78,10 +78,8 @@ public final class BedrockScreenshotGalleryScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(2F, 2F);
-        graphics.centeredText(this.font, this.title, this.width / 4, 6, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     private void refresh() {

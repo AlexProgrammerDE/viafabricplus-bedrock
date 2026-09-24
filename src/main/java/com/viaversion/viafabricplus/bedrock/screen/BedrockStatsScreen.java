@@ -25,7 +25,6 @@ import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Statistic;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -85,10 +84,8 @@ public final class BedrockStatsScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(2F, 2F);
-        graphics.centeredText(this.font, this.title, this.width / 4, 6, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     private void load() {
@@ -190,30 +187,22 @@ public final class BedrockStatsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int width, final int height) {
             final Font font = Minecraft.getInstance().font;
-            final String icon = switch (this.stat) {
-                case MINUTES_PLAYED -> "timer@0.5x.icon";
-                case BLOCKS_BROKEN -> "pickaxe@0.5x.icon";
-                case MOBS_DEFEATED -> "sword@0.5x.icon";
-                case DISTANCE_TRAVELED -> "boots@0.5x.icon";
-            };
-            final int iconSize = height - SLOT_MARGIN * 2;
-            BedrockUiArt.drawIcon(graphics, icon, SLOT_MARGIN, SLOT_MARGIN, iconSize);
-            final int textX = SLOT_MARGIN + iconSize + 6;
+            final int textX = SLOT_MARGIN;
             final String label = Component.translatable("bedrock_stats.viafabricplus." + this.stat.name().toLowerCase()).getString();
             graphics.text(font, label, textX, SLOT_MARGIN + 1, -1);
             final String value = format(this.stat, this.player);
-            graphics.text(font, value, textX, SLOT_MARGIN + font.lineHeight + 4, 0xFF8FBBFF);
+            graphics.text(font, value, textX, SLOT_MARGIN + font.lineHeight + 4, -1);
             if (BedrockStatsScreen.this.comparing) {
                 final String comparison = format(this.stat, this.own);
                 graphics.text(font, comparison, width - SLOT_MARGIN - font.width(comparison),
-                    SLOT_MARGIN + font.lineHeight + 4, 0xFFFFBC7A);
+                    SLOT_MARGIN + font.lineHeight + 4, 0xFFAAAAAA);
                 final double targetNumber = number(this.player);
                 final double ownNumber = number(this.own);
                 final double max = Math.max(1D, Math.max(targetNumber, ownNumber));
                 final int barWidth = width - SLOT_MARGIN * 2;
                 final int barY = height - SLOT_MARGIN - 2;
-                graphics.fill(SLOT_MARGIN, barY, SLOT_MARGIN + (int) (barWidth * targetNumber / max), barY + 2, 0xFF8FBBFF);
-                graphics.fill(SLOT_MARGIN, barY + 2, SLOT_MARGIN + (int) (barWidth * ownNumber / max), barY + 4, 0xFFFFBC7A);
+                graphics.fill(SLOT_MARGIN, barY, SLOT_MARGIN + (int) (barWidth * targetNumber / max), barY + 2, ACCENT_COLOR);
+                graphics.fill(SLOT_MARGIN, barY + 2, SLOT_MARGIN + (int) (barWidth * ownNumber / max), barY + 4, 0xFFAAAAAA);
             }
         }
 

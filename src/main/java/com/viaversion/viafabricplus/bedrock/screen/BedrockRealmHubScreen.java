@@ -32,7 +32,6 @@ import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRelativeTime;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockRealmImages;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -65,12 +64,11 @@ import org.jspecify.annotations.NonNull;
 /** Community, Timeline, World, and Settings for one Bedrock Realm. */
 public final class BedrockRealmHubScreen extends VFPScreen {
 
-    private static final int TAB_Y = 36;
-    private static final int SUBTAB_Y = 59;
-    private static final int LIST_Y = 83;
+    private static final int TAB_Y = 48;
+    private static final int SUBTAB_Y = 71;
+    private static final int LIST_Y = 95;
     private static final int ROW_WIDTH = 620;
     private static final int SECONDARY = 0xFFC9C9C9;
-    private static final int[] ACTIVITY_COLORS = {0xFF58C9CC, 0xFF9A75D9, 0xFFFFAC68, 0xFF9CDC6E};
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE d");
     private static final DateTimeFormatter BACKUP_DATE = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm");
 
@@ -174,9 +172,12 @@ public final class BedrockRealmHubScreen extends VFPScreen {
             });
         }
 
+        if (this.tab == Tab.WORLD && this.width >= 960) {
+            this.addRenderableOnly((graphics, mouseX, mouseY, delta) -> this.renderRealmPreview(graphics));
+        }
         this.list = this.addRenderableWidget(new HubList(this.minecraft, this.width, this.height,
             LIST_Y, FOOTER_HEIGHT, this.tab == Tab.TIMELINE ? 30
-                : this.tab == Tab.COMMUNITY && this.community == Community.STORIES ? 118 : 37));
+                : this.tab == Tab.COMMUNITY && this.community == Community.STORIES ? 48 : 37));
         this.primaryButton = Button.builder(Component.literal(""), _ -> this.primary()).build();
         this.secondaryButton = Button.builder(Component.literal(""), _ -> this.secondary()).build();
         this.removeButton = Button.builder(Component.literal("Remove member"), _ -> this.removeMember()).build();
@@ -235,27 +236,19 @@ public final class BedrockRealmHubScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(1.5F, 1.5F);
-        graphics.centeredText(this.font, this.title, this.width / 3, 8, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
-    @Override
-    public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY,
-                                  final float partialTick) {
-        super.extractBackground(graphics, mouseX, mouseY, partialTick);
-        if (BedrockUiArt.drawBackdrop(graphics, this.width, this.height)) {
-            graphics.fill(0, 0, this.width, this.height, 0x88303040);
+    private void renderRealmPreview(final GuiGraphicsExtractor graphics) {
+        final int x = (this.width - ROW_WIDTH) / 2 - 172;
+        final int y = LIST_Y + 4;
+        if (!BedrockRealmImages.drawPreview(graphics, this.world == null ? this.realm.getRawResponse() : this.world,
+            x, y, 154, 86)) {
+            graphics.centeredText(this.font, Component.translatable("bedrock_realms.viafabricplus.no_preview"),
+                x + 77, y + 38, SECONDARY);
         }
-        if (this.tab == Tab.WORLD && this.width >= 960) {
-            final int x = (this.width - ROW_WIDTH) / 2 - 172;
-            final int y = LIST_Y + 4;
-            graphics.fill(x - 3, y - 3, x + 157, y + 99, 0xFF171819);
-            BedrockRealmImages.drawPreview(graphics, this.world == null ? this.realm.getRawResponse() : this.world,
-                x, y, 154, 86);
-            graphics.text(this.font, this.realm.getNameOr("Realm"), x + 2, y + 88, 0xFFFFFFFF);
-        }
+        graphics.text(this.font, this.realm.getNameOr("Realm"), x, y + 88, -1);
     }
 
     private void addSubtabs(final int count, final java.util.function.IntFunction<String> label,
@@ -921,28 +914,17 @@ public final class BedrockRealmHubScreen extends VFPScreen {
         public void mappedRender(final GuiGraphicsExtractor graphics, final int width, final int height) {
             final Font font = Minecraft.getInstance().font;
             final int color = BedrockRealmHubScreen.this.list.getFocused() == this ? ACCENT_COLOR : -1;
-            graphics.fill(0, 0, width, height - 2, 0xB8303234);
             if (this.kind.startsWith("timeline")) {
                 this.renderTimeline(graphics, width, height, font, color);
                 return;
             }
             if (this.kind.equals("story")) {
-                final int artWidth = Math.min(190, width / 3);
-                final int artHeight = Math.min(height - 10, artWidth * 9 / 16);
-                if (!BedrockUiArt.drawEvent(graphics, this.title.replace(" ", ""), 5,
-                    (height - artHeight) / 2, artWidth, artHeight)) {
-                    final int artY = (height - artHeight) / 2;
-                    graphics.fill(5, artY, 5 + artWidth, artY + artHeight, 0xFF282234);
-                    graphics.centeredText(font, Component.literal("Story"), 5 + artWidth / 2,
-                        artY + (artHeight - font.lineHeight) / 2, 0xFFC9B4E9);
-                }
-                final int textX = artWidth + 13;
-                graphics.text(font, clip(font, this.title, width - textX - 8), textX, 8, color);
-                graphics.text(font, clip(font, this.displayDetail(), width - textX - 8), textX,
-                    13 + font.lineHeight, SECONDARY);
+                graphics.text(font, clip(font, this.title, width - 14), 7, 4, color);
+                graphics.text(font, clip(font, this.displayDetail(), width - 14), 7,
+                    7 + font.lineHeight, SECONDARY);
                 if (!this.description.isBlank()) {
-                    graphics.text(font, clip(font, this.description, width - textX - 8), textX,
-                        18 + font.lineHeight * 2, SECONDARY);
+                    graphics.text(font, clip(font, this.description, width - 14), 7,
+                        10 + font.lineHeight * 2, SECONDARY);
                 }
                 return;
             }
@@ -980,7 +962,6 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 if (sessions == null || !sessions.has(this.id)) continue;
                 final long start = date.atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
                 final long end = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toEpochSecond();
-                final int colorIndex = Math.floorMod(this.id.hashCode(), ACTIVITY_COLORS.length);
                 for (final JsonElement element : sessions.getAsJsonArray(this.id)) {
                     final JsonObject session = element.getAsJsonObject();
                     final long begin = Math.max(start, session.get("s").getAsLong());
@@ -988,7 +969,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                     if (finish <= begin) continue;
                     final int barX = x + 3 + (int) ((begin - start) * Math.max(1, dayWidth - 6) / (end - start));
                     final int barEnd = x + 3 + (int) ((finish - start) * Math.max(1, dayWidth - 6) / (end - start));
-                    graphics.fill(barX, 5, Math.max(barX + 2, barEnd), height - 7, ACTIVITY_COLORS[colorIndex]);
+                    graphics.fill(barX, 5, Math.max(barX + 2, barEnd), height - 7, ACCENT_COLOR);
                 }
             }
         }

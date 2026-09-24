@@ -61,8 +61,8 @@ public final class BedrockPartyScreen extends VFPScreen {
         FIND, PARTY, INVITES, INVITE, CHAT
     }
 
-    private static final int TABS_TOP = 36;
-    private static final int LIST_TOP = 64;
+    private static final int TABS_TOP = 48;
+    private static final int LIST_TOP = 76;
     private static final int ROW_WIDTH = 352;
     private static final long MEMBERS_REFRESH = TimeUnit.SECONDS.toNanos(5);
     private static final long MEMBERS_RETRY_DELAY = TimeUnit.SECONDS.toNanos(30);
@@ -225,10 +225,8 @@ public final class BedrockPartyScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(2F, 2F);
-        graphics.centeredText(this.font, this.title, this.width / 4, 6, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     private Component label(final String action) {

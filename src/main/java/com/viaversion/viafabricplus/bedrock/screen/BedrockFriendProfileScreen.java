@@ -116,7 +116,6 @@ public final class BedrockFriendProfileScreen extends VFPScreen {
     public void extractRenderState(final @NonNull GuiGraphicsExtractor graphics, final int mouseX, final int mouseY,
                                    final float delta) {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
-        this.renderScreenTitle(graphics);
         final int center = this.width / 2;
         BedrockPlayerImages.draw(graphics, this.user.xuid(), center - 16, 52, 32);
         int y = 91;

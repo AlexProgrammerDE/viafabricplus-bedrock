@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
-/** Uses images supplied by a Realm before falling back to Bedrock's default Realm art. */
+/** Draws images supplied by a Realm. */
 public final class BedrockRealmImages {
 
     private BedrockRealmImages() {
@@ -30,7 +30,7 @@ public final class BedrockRealmImages {
                 : BedrockImageCache.drawEncoded(graphics, realmId(realm), image, x, y, width, height);
             if (drawn) return true;
         }
-        return BedrockUiArt.drawRealmPreview(graphics, x, y, width, height);
+        return false;
     }
 
     private static String image(final JsonObject realm) {

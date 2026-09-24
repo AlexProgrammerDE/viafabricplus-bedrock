@@ -26,7 +26,6 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Achievement;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -69,11 +68,11 @@ public final class BedrockAchievementsScreen extends VFPScreen {
                     + item.name().toLowerCase()), _ -> {
                         this.filter = item;
                         this.rebuildWidgets();
-                    }).pos(left + item.ordinal() * width, 38).size(width, 20).build();
+                    }).pos(left + item.ordinal() * width, 48).size(width, 20).build();
             button.active = this.filter != item;
             this.addRenderableWidget(button);
         }
-        this.addRenderableWidget(new AchievementList(this.minecraft, this.width, this.height, 66, FOOTER_HEIGHT,
+        this.addRenderableWidget(new AchievementList(this.minecraft, this.width, this.height, 76, FOOTER_HEIGHT,
             this.font.lineHeight * 2 + 12));
         final Button refresh = Button.builder(Component.translatable("bedrock_friends.viafabricplus.refresh"), _ -> this.load()).build();
         refresh.active = !this.loading;
@@ -86,10 +85,8 @@ public final class BedrockAchievementsScreen extends VFPScreen {
 
     @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(2F, 2F);
-        graphics.centeredText(this.font, this.title, this.width / 4, 6, ACCENT_COLOR);
-        graphics.pose().popMatrix();
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     private void load() {
@@ -169,19 +166,15 @@ public final class BedrockAchievementsScreen extends VFPScreen {
             final String score = this.achievement.gamerscore() == 0 ? ""
                 : this.achievement.gamerscore() + " G";
             final int iconSize = height - SLOT_MARGIN * 2;
-            if (!BedrockImageCache.drawRemote(graphics, this.achievement.iconUrl(), SLOT_MARGIN,
-                SLOT_MARGIN, iconSize, iconSize)) {
-                BedrockUiArt.drawIcon(graphics, "achievements@0.5x.icon", SLOT_MARGIN,
-                    SLOT_MARGIN, iconSize);
-            }
+            BedrockImageCache.drawRemote(graphics, this.achievement.iconUrl(), SLOT_MARGIN,
+                SLOT_MARGIN, iconSize, iconSize);
             final int textX = SLOT_MARGIN + iconSize + 6;
             final int textWidth = width - textX - SLOT_MARGIN - font.width(score) - 12;
-            graphics.text(font, fit(font, this.achievement.name(), textWidth), textX, SLOT_MARGIN + 1,
-                this.achievement.achieved() ? 0xFFA9D98A : -1);
+            graphics.text(font, fit(font, this.achievement.name(), textWidth), textX, SLOT_MARGIN + 1, -1);
             graphics.text(font, fit(font, this.achievement.description(), width - textX - SLOT_MARGIN), textX,
-                SLOT_MARGIN + font.lineHeight + 4, 0xFFB8B8B8);
+                SLOT_MARGIN + font.lineHeight + 4, 0xFFAAAAAA);
             if (!score.isEmpty()) {
-                graphics.text(font, score, width - SLOT_MARGIN - font.width(score), SLOT_MARGIN + 1, 0xFFDDBD6D);
+                graphics.text(font, score, width - SLOT_MARGIN - font.width(score), SLOT_MARGIN + 1, -1);
             }
         }
 

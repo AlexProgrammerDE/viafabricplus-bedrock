@@ -28,7 +28,6 @@ import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.NetherNet
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockRealmImages;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockUiArt;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -76,19 +75,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
     }
 
     @Override
-    public void extractBackground(final GuiGraphicsExtractor graphics, final int mouseX, final int mouseY,
-                                  final float partialTick) {
-        super.extractBackground(graphics, mouseX, mouseY, partialTick);
-        if (BedrockUiArt.drawBackdrop(graphics, this.width, this.height)) {
-            graphics.fill(0, 0, this.width, this.height, 0x66303040);
-        }
-    }
-
-    @Override
     public void renderTitle(final GuiGraphicsExtractor graphics) {
-        if (this.width < 280 || !BedrockUiArt.drawRealmsLogo(graphics, (this.width - 126) / 2, 3, 126, 48)) {
-            graphics.centeredText(this.font, this.title, this.width / 2, 13, ACCENT_COLOR);
-        }
+        super.renderTitle(graphics);
+        graphics.centeredText(this.font, this.title, this.width / 2, 32, -1);
     }
 
     /**
@@ -215,17 +204,15 @@ public final class BedrockRealmsScreen extends VFPScreen {
         final int panelWidth = this.width - x - 12;
         final int top = CONTENT_TOP + 4;
         final int bottom = this.height - FOOTER_HEIGHT - 5;
-        graphics.fill(x, top, x + panelWidth, bottom, 0xFF171819);
-        graphics.fill(x + 2, top + 2, x + panelWidth - 2, bottom - 2, 0xDD303234);
         final int textX = x + 10;
         final int textWidth = panelWidth - 20;
         int y = top + 10;
         final int availableHeight = bottom - top;
         if (availableHeight >= 270) {
             final int previewHeight = Math.min(110, Math.max(64, availableHeight - 230));
-            graphics.fill(textX - 2, y - 2, x + panelWidth - 8, y + previewHeight + 2, 0xFF111214);
             if (!BedrockRealmImages.drawPreview(graphics, realm.getRawResponse(), textX, y, textWidth, previewHeight)) {
-                graphics.fill(textX, y, textX + textWidth, y + previewHeight, 0xFF262A32);
+                graphics.centeredText(this.font, Component.translatable("bedrock_realms.viafabricplus.no_preview"),
+                    textX + textWidth / 2, y + (previewHeight - this.font.lineHeight) / 2, 0xFFAAAAAA);
             }
             y += previewHeight + 12;
         }
@@ -233,8 +220,7 @@ public final class BedrockRealmsScreen extends VFPScreen {
         y = this.detailLine(graphics, realm.getNameOr("Realm"), textX + 34, y, textWidth - 34, 0xFFFFFFFF, 16);
         y = this.detailLine(graphics, "Owned by " + realm.getOwnerNameOr("Unknown"), textX + 34, y, textWidth - 34,
             0xFFD0D2D5, 15);
-        graphics.fill(textX, y, x + panelWidth - 10, y + 1, 0xFF6C6E72);
-        y += 11;
+        y += 8;
         y = this.detailLine(graphics, realm.getMotdOr("No description"), textX, y, textWidth, 0xFFD0D2D5, 28);
         y += 8;
         y = this.detailLine(graphics, "Status: " + (realm.isExpired() ? "Expired" : realm.getState()),

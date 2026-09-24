@@ -18,7 +18,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -72,7 +71,7 @@ public final class BedrockImageCache {
             final HttpResponse<byte[]> response = HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
             if (response.statusCode() != 200) throw new IOException("Image returned HTTP " + response.statusCode());
             return response.body();
-        }, false, x, y, width, height);
+        }, x, y, width, height);
     }
 
     public static boolean drawEncoded(final GuiGraphicsExtractor graphics, final String key, final String encoded,
@@ -82,7 +81,7 @@ public final class BedrockImageCache {
         final String data = encoded.startsWith("data:image/") && separator > 0
             ? encoded.substring(separator + 1) : encoded;
         return draw(graphics, "encoded:" + key + ':' + encoded.length() + ':' + encoded.hashCode(),
-            () -> Base64.getDecoder().decode(data), false, x, y, width, height);
+            () -> Base64.getDecoder().decode(data), x, y, width, height);
     }
 
     private static boolean trustedImageHost(final String host) {
@@ -90,16 +89,6 @@ public final class BedrockImageCache {
             || host.equals("xbox.com") || host.endsWith(".xbox.com")
             || host.equals("minecraft.net") || host.endsWith(".minecraft.net")
             || host.equals("minecraft-services.net") || host.endsWith(".minecraft-services.net");
-    }
-
-    public static boolean drawBundled(final GuiGraphicsExtractor graphics, final String resource,
-                                      final int x, final int y, final int width, final int height) {
-        return draw(graphics, resource, () -> {
-            try (InputStream stream = BedrockImageCache.class.getResourceAsStream(resource)) {
-                if (stream == null) throw new IOException("Bundled Bedrock image is missing");
-                return stream.readAllBytes();
-            }
-        }, true, x, y, width, height);
     }
 
     public static boolean drawScreenshot(final GuiGraphicsExtractor graphics, final Path path, final int x,
@@ -125,11 +114,11 @@ public final class BedrockImageCache {
             final ByteArrayOutputStream encoded = new ByteArrayOutputStream();
             ImageIO.write(thumbnail, "png", encoded);
             return encoded.toByteArray();
-        }, false, x, y, width, height);
+        }, x, y, width, height);
     }
 
     private static boolean draw(final GuiGraphicsExtractor graphics, final String key, final ImageSource source,
-                                final boolean installedArt, final int x, final int y, final int width, final int height) {
+                                final int x, final int y, final int width, final int height) {
         final Image image = IMAGES.get(key);
         if (image != null) {
             int sourceWidth = image.width();
@@ -150,27 +139,11 @@ public final class BedrockImageCache {
                 try {
                     final byte[] bytes = source.read();
                     if (bytes.length > MAX_BYTES) throw new IOException("Image is too large");
-                    final int limit = installedArt ? 4096 : 2048;
                     final NativeImage pixels = NativeImage.read(isPng(bytes)
-                        ? bytes : convertImage(bytes, limit));
-                    if (pixels.getWidth() > limit || pixels.getHeight() > limit) {
+                        ? bytes : convertImage(bytes, 2048));
+                    if (pixels.getWidth() > 2048 || pixels.getHeight() > 2048) {
                         pixels.close();
                         throw new IOException("Image dimensions are too large");
-                    }
-                    if (pixels.getWidth() > 2048 || pixels.getHeight() > 2048) {
-                        final int longest = Math.max(pixels.getWidth(), pixels.getHeight());
-                        final int scaledWidth = Math.max(1, pixels.getWidth() * 2048 / longest);
-                        final int scaledHeight = Math.max(1, pixels.getHeight() * 2048 / longest);
-                        final NativeImage scaled = new NativeImage(pixels.format(), scaledWidth, scaledHeight, false);
-                        try {
-                            pixels.resizeSubRectTo(0, 0, pixels.getWidth(), pixels.getHeight(), scaled);
-                            return scaled;
-                        } catch (Exception exception) {
-                            scaled.close();
-                            throw exception;
-                        } finally {
-                            pixels.close();
-                        }
                     }
                     return pixels;
                 } catch (Exception exception) {
