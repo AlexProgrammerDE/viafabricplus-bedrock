@@ -22,9 +22,11 @@
 package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
+import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.BedrockConnectionUtil;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.NetherNetJsonRpcAddress;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -152,6 +154,13 @@ public final class BedrockRealmsScreen extends VFPScreen {
                 service = realmsService;
                 loading = false;
                 Minecraft.getInstance().execute(this::rebuildWidgets);
+                final List<String> owners = worlds.stream().map(world -> world.getOwnerUidOr(""))
+                    .filter(id -> id.matches("[0-9]+"))
+                    .distinct().limit(100).toList();
+                BedrockSocialService.profileNames(account, owners).exceptionally(error -> {
+                    ViaFabricPlusBedrock.impl().logger().debug("Could not load Realm owner pictures", error);
+                    return java.util.Map.of();
+                });
             }).exceptionally(throwable -> this.fail("Failed to load the realm worlds", throwable));
         }).exceptionally(throwable -> this.fail("Failed to check the realms availability", throwable));
     }
@@ -193,8 +202,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
         final int textX = x + 10;
         final int textWidth = panelWidth - 20;
         int y = top + 10;
-        y = this.detailLine(graphics, realm.getNameOr("Realm"), textX, y, textWidth, 0xFFFFFFFF, 16);
-        y = this.detailLine(graphics, "Owned by " + realm.getOwnerNameOr("Unknown"), textX, y, textWidth,
+        BedrockPlayerImages.draw(graphics, realm.getOwnerUidOr(""), textX, y, 27);
+        y = this.detailLine(graphics, realm.getNameOr("Realm"), textX + 34, y, textWidth - 34, 0xFFFFFFFF, 16);
+        y = this.detailLine(graphics, "Owned by " + realm.getOwnerNameOr("Unknown"), textX + 34, y, textWidth - 34,
             0xFFD0D2D5, 15);
         graphics.fill(textX, y, x + panelWidth - 10, y + 1, 0xFF6C6E72);
         y += 11;
@@ -351,6 +361,10 @@ public final class BedrockRealmsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor context, final int entryWidth, final int entryHeight) {
             final Font font = Minecraft.getInstance().font;
+            final int portrait = Math.min(25, entryHeight - 5);
+            final int textX = SLOT_MARGIN + portrait + 5;
+            BedrockPlayerImages.draw(context, this.realmsServer.getOwnerUidOr(""), SLOT_MARGIN,
+                (entryHeight - portrait) / 2, portrait);
 
             final StringBuilder name = new StringBuilder();
             final String ownerName = this.realmsServer.getOwnerName();
@@ -367,8 +381,8 @@ public final class BedrockRealmsScreen extends VFPScreen {
             name.append(" (").append(state).append(")");
 
             final String version = this.version();
-            final int availableWidth = entryWidth - font.width(version) - SLOT_MARGIN * 3 - 8;
-            context.text(font, fit(font, name.toString(), availableWidth), SLOT_MARGIN, SLOT_MARGIN,
+            final int availableWidth = entryWidth - font.width(version) - textX - SLOT_MARGIN - 8;
+            context.text(font, fit(font, name.toString(), availableWidth), textX, SLOT_MARGIN,
                 this.slotList.getFocused() == this ? ACCENT_COLOR : -1);
             context.text(font, version, entryWidth - font.width(version) - SLOT_MARGIN, SLOT_MARGIN, -1);
 

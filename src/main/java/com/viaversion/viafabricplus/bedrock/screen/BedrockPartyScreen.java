@@ -29,6 +29,7 @@ import com.viaversion.viafabricplus.bedrock.party.BedrockPartyChat;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyInvites;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyInvites.Invite;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyService;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyService.Member;
 import com.viaversion.viafabricplus.bedrock.party.BedrockPartyService.Party;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
@@ -254,6 +255,8 @@ public final class BedrockPartyScreen extends VFPScreen {
             this.loadingSelf = false;
             if (this.account() == account) {
                 this.selfXuid = profile.getId();
+                BedrockPlayerImages.remember(profile.getId(),
+                    profile.getSettings().getOrDefault("AppDisplayPicRaw", ""));
             }
         }, Minecraft.getInstance()).exceptionally(error -> this.fail("Failed to load party identity", error));
     }
@@ -662,6 +665,10 @@ public final class BedrockPartyScreen extends VFPScreen {
 
         protected abstract String title();
 
+        protected String xuid() {
+            return "";
+        }
+
         protected String detail() {
             return "";
         }
@@ -674,10 +681,16 @@ public final class BedrockPartyScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int entryWidth, final int entryHeight) {
             final Font font = Minecraft.getInstance().font;
-            graphics.text(font, fit(font, this.title(), entryWidth - SLOT_MARGIN * 2), SLOT_MARGIN,
+            final String xuid = this.xuid();
+            final int portrait = xuid.isBlank() ? 0 : Math.min(23, entryHeight - 5);
+            final int textX = SLOT_MARGIN + (portrait == 0 ? 0 : portrait + 5);
+            if (portrait > 0) {
+                BedrockPlayerImages.draw(graphics, xuid, SLOT_MARGIN, (entryHeight - portrait) / 2, portrait);
+            }
+            graphics.text(font, fit(font, this.title(), entryWidth - textX - SLOT_MARGIN), textX,
                 this.detail().isBlank() ? (entryHeight - font.lineHeight) / 2 : SLOT_MARGIN + 1, -1);
             if (!this.detail().isBlank()) {
-                graphics.text(font, fit(font, this.detail(), entryWidth - SLOT_MARGIN * 2), SLOT_MARGIN,
+                graphics.text(font, fit(font, this.detail(), entryWidth - textX - SLOT_MARGIN), textX,
                     SLOT_MARGIN + font.lineHeight + 4, 0xFFB8B8B8);
             }
         }
@@ -695,6 +708,11 @@ public final class BedrockPartyScreen extends VFPScreen {
         @Override
         protected String title() {
             return BedrockPartyScreen.this.name(this.party.leaderXuid());
+        }
+
+        @Override
+        protected String xuid() {
+            return this.party.leaderXuid();
         }
 
         @Override
@@ -718,6 +736,11 @@ public final class BedrockPartyScreen extends VFPScreen {
         @Override
         protected String title() {
             return BedrockPartyScreen.this.name(this.member.xuid());
+        }
+
+        @Override
+        protected String xuid() {
+            return this.member.xuid();
         }
 
         @Override
@@ -762,6 +785,11 @@ public final class BedrockPartyScreen extends VFPScreen {
         }
 
         @Override
+        protected String xuid() {
+            return this.user.xuid();
+        }
+
+        @Override
         protected String detail() {
             return Component.translatable(this.user.online() ? "bedrock_friends.viafabricplus.online"
                 : "bedrock_friends.viafabricplus.offline").getString();
@@ -781,6 +809,12 @@ public final class BedrockPartyScreen extends VFPScreen {
         protected String title() {
             final String sender = this.message.sender();
             return sender.matches("[0-9]+") ? BedrockPartyScreen.this.name(sender) : sender;
+        }
+
+        @Override
+        protected String xuid() {
+            final String sender = this.message.sender();
+            return sender.matches("[0-9]+") ? sender : "";
         }
 
         @Override

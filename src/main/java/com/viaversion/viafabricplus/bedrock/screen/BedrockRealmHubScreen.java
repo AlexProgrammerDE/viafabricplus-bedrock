@@ -30,6 +30,8 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmHubService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRelativeTime;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockEventArt;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -54,6 +56,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsServer;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +74,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
     private static final int[] ACTIVITY_COLORS = {0xFF58C9CC, 0xFF9A75D9, 0xFFFFAC68, 0xFF9CDC6E};
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE d");
     private static final DateTimeFormatter BACKUP_DATE = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm");
+    private static final ItemStack STORY_FALLBACK = new ItemStack(Items.PAINTING);
 
     private enum Tab { COMMUNITY, TIMELINE, WORLD, SETTINGS }
 
@@ -85,6 +90,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
     private String defaultPermission;
     private final Map<String, String> names = new HashMap<>();
     private final Set<String> pendingNames = new HashSet<>();
+    private final Set<String> resolvedProfiles = new HashSet<>();
     private Tab tab = Tab.COMMUNITY;
     private Community community = Community.STORIES;
     private World worldTab = World.OVERVIEW;
@@ -290,6 +296,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 this.storiesLoading = false;
                 if (error == null) {
                     this.events = result;
+                    this.resolveNames();
                 } else {
                     this.report(error);
                 }
@@ -351,7 +358,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 final String id = string(player, "uuid");
                 final String name = string(player, "name");
                 if (!name.isBlank()) this.names.put(id, name);
-                else if (id.matches("[0-9]+") && !this.names.containsKey(id)
+                if (id.matches("[0-9]+") && !this.resolvedProfiles.contains(id)
                     && !this.pendingNames.contains(id)) ids.add(id);
             }
         }
@@ -359,7 +366,17 @@ public final class BedrockRealmHubScreen extends VFPScreen {
             final JsonObject activities = object(object(this.activity, "result"), "activity");
             if (activities != null) {
                 for (final String id : activities.keySet()) {
-                    if (!this.names.containsKey(id) && !this.pendingNames.contains(id)) ids.add(id);
+                    if (id.matches("[0-9]+") && !this.resolvedProfiles.contains(id)
+                        && !this.pendingNames.contains(id)) ids.add(id);
+                }
+            }
+        }
+        if (this.events != null) {
+            for (final JsonElement element : array(this.events, "result")) {
+                for (final JsonElement player : array(element.getAsJsonObject(), "players")) {
+                    final String id = player.getAsString();
+                    if (id.matches("[0-9]+") && !this.resolvedProfiles.contains(id)
+                        && !this.pendingNames.contains(id)) ids.add(id);
                 }
             }
         }
@@ -374,6 +391,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                     Minecraft.getInstance().execute(() -> {
                         this.pendingNames.removeAll(batch);
                         if (error == null) {
+                            this.resolvedProfiles.addAll(batch);
                             this.names.putAll(found);
                             this.populate();
                         }
@@ -892,17 +910,31 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 this.renderTimeline(graphics, width, height, font, color);
                 return;
             }
-            graphics.text(font, clip(font, this.title, width - 130), 7, 4, color);
+            final boolean portrait = this.kind.equals("story") || this.kind.equals("member")
+                || this.kind.equals("summary") && this.id.matches("[0-9]+");
+            final int textX = portrait ? 42 : 7;
+            if (this.kind.equals("story")) {
+                if (!BedrockEventArt.draw(graphics, this.title.replace(" ", ""), 5, 3, 30, 30)) {
+                    graphics.item(STORY_FALLBACK, 12, 10);
+                }
+            } else if (portrait) {
+                BedrockPlayerImages.draw(graphics, this.id, 5, 3, 30);
+            }
+            graphics.text(font, clip(font, this.title, width - textX - 125), textX, 4, color);
             final String displayDetail = this.displayDetail();
             if (!displayDetail.isBlank()) graphics.text(font, clip(font, displayDetail, 120), width - 125, 4, SECONDARY);
-            if (!this.description.isBlank()) graphics.text(font, clip(font, this.description, width - 15), 7,
+            if (!this.description.isBlank()) graphics.text(font, clip(font, this.description, width - textX - 8), textX,
                 5 + font.lineHeight, SECONDARY);
         }
 
         private void renderTimeline(final GuiGraphicsExtractor graphics, final int width, final int height,
                                     final Font font, final int color) {
             final int labelWidth = Math.min(140, width / 3);
-            graphics.text(font, clip(font, this.title, labelWidth - 10), 7, 9, color);
+            final int labelX = this.kind.equals("timeline-header") ? 7 : 33;
+            if (!this.kind.equals("timeline-header")) {
+                BedrockPlayerImages.draw(graphics, this.id, 5, 3, 24);
+            }
+            graphics.text(font, clip(font, this.title, labelWidth - labelX - 3), labelX, 9, color);
             final int dayWidth = (width - labelWidth) / 7;
             for (int day = 0; day < 7; day++) {
                 final LocalDate date = BedrockRealmHubScreen.this.firstDay().plusDays(day);

@@ -29,6 +29,7 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService.FriendR
 import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService.SocialUser;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.network.BedrockConnectionUtil;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -233,6 +234,8 @@ public final class BedrockFriendsScreen extends VFPScreen {
         account.getXboxUserProfile().getUpToDateAsync().thenAcceptAsync(profile -> {
             this.selfLoading = false;
             if (ViaFabricPlusBedrock.impl().account().get() == account) {
+                BedrockPlayerImages.remember(profile.getId(),
+                    profile.getSettings().getOrDefault("AppDisplayPicRaw", ""));
                 final String name = ViaFabricPlusBedrock.impl().account().displayName();
                 this.self = new SocialUser(profile.getId(), name == null ? "" : name,
                     name == null ? "" : name, true, "", "", -1, false, false, false, false);
@@ -633,11 +636,14 @@ public final class BedrockFriendsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int entryWidth, final int entryHeight) {
             final Font font = Minecraft.getInstance().font;
+            final int portrait = Math.min(23, entryHeight - 5);
+            final int textX = SLOT_MARGIN + portrait + 5;
+            BedrockPlayerImages.draw(graphics, this.user.xuid(), SLOT_MARGIN, (entryHeight - portrait) / 2, portrait);
             final FriendWorld world = this.list.screenWorld(this.user.xuid());
             final Component status = Component.translatable(world != null ? "bedrock_friends.viafabricplus.joinable"
                 : this.user.online() ? "bedrock_friends.viafabricplus.online" : "bedrock_friends.viafabricplus.offline");
             final int statusWidth = font.width(status);
-            final int textWidth = entryWidth - statusWidth - SLOT_MARGIN * 3 - 8;
+            final int textWidth = entryWidth - statusWidth - textX - SLOT_MARGIN - 8;
             final String detail;
             if (world != null) {
                 detail = Component.translatable("bedrock_friends.viafabricplus.playing", world.worldName()).getString();
@@ -651,12 +657,12 @@ public final class BedrockFriendsScreen extends VFPScreen {
             if (this.list.getFocused() == this) {
                 graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
             }
-            graphics.text(font, fit(font, this.user.name(), textWidth), SLOT_MARGIN, titleY,
+            graphics.text(font, fit(font, this.user.name(), textWidth), textX, titleY,
                 this.list.getFocused() == this ? ACCENT_COLOR : -1);
             graphics.text(font, status, entryWidth - statusWidth - SLOT_MARGIN, titleY,
                 world != null ? ACCENT_COLOR : this.user.online() ? -1 : SECONDARY_COLOR);
             if (!detail.isBlank()) {
-                graphics.text(font, fit(font, detail, entryWidth - SLOT_MARGIN * 2), SLOT_MARGIN,
+                graphics.text(font, fit(font, detail, entryWidth - textX - SLOT_MARGIN), textX,
                     SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
             }
         }
@@ -681,6 +687,10 @@ public final class BedrockFriendsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int entryWidth, final int entryHeight) {
             final Font font = Minecraft.getInstance().font;
+            final int portrait = Math.min(23, entryHeight - 5);
+            final int textX = SLOT_MARGIN + portrait + 5;
+            BedrockPlayerImages.draw(graphics, this.world.ownerXuid(), SLOT_MARGIN,
+                (entryHeight - portrait) / 2, portrait);
             final String players = Component.translatable("bedrock_friends.viafabricplus.players",
                 this.world.players(), this.world.maxPlayers()).getString();
             final int playersWidth = font.width(players);
@@ -688,11 +698,11 @@ public final class BedrockFriendsScreen extends VFPScreen {
             if (this.list.getFocused() == this) {
                 graphics.fill(0, 0, 2, entryHeight, ACCENT_COLOR);
             }
-            graphics.text(font, fit(font, this.world.worldName(), entryWidth - playersWidth - SLOT_MARGIN * 3 - 8),
-                SLOT_MARGIN, SLOT_MARGIN + 1, this.list.getFocused() == this ? ACCENT_COLOR : -1);
+            graphics.text(font, fit(font, this.world.worldName(), entryWidth - playersWidth - textX - SLOT_MARGIN - 8),
+                textX, SLOT_MARGIN + 1, this.list.getFocused() == this ? ACCENT_COLOR : -1);
             graphics.text(font, players, entryWidth - playersWidth - SLOT_MARGIN, SLOT_MARGIN + 1, -1);
-            graphics.text(font, fit(font, this.world.hostName(), entryWidth - versionWidth - SLOT_MARGIN * 3 - 8),
-                SLOT_MARGIN, SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
+            graphics.text(font, fit(font, this.world.hostName(), entryWidth - versionWidth - textX - SLOT_MARGIN - 8),
+                textX, SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
             graphics.text(font, this.world.version(), entryWidth - versionWidth - SLOT_MARGIN,
                 SLOT_MARGIN + font.lineHeight + 4, SECONDARY_COLOR);
         }

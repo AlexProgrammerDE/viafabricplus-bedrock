@@ -21,6 +21,7 @@
 
 package com.viaversion.viafabricplus.bedrock.friends;
 
+import com.viaversion.viafabricplus.bedrock.visual.BedrockPlayerImages;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -159,6 +160,8 @@ public final class BedrockSocialService {
                 final JsonArray settings = new JsonArray();
                 settings.add("GameDisplayName");
                 settings.add("Gamertag");
+                settings.add("GameDisplayPicRaw");
+                settings.add("AppDisplayPicRaw");
                 body.add("settings", settings);
                 final HttpRequest request = HttpRequest.newBuilder(PROFILES)
                     .timeout(Duration.ofSeconds(15))
@@ -177,14 +180,21 @@ public final class BedrockSocialService {
                     final JsonObject profile = element.getAsJsonObject();
                     String displayName = "";
                     String gamertag = "";
+                    String picture = "";
+                    String appPicture = "";
                     for (final JsonElement settingElement : profile.getAsJsonArray("settings")) {
                         final JsonObject setting = settingElement.getAsJsonObject();
                         if ("GameDisplayName".equals(string(setting, "id"))) {
                             displayName = string(setting, "value");
                         } else if ("Gamertag".equals(string(setting, "id"))) {
                             gamertag = string(setting, "value");
+                        } else if ("GameDisplayPicRaw".equals(string(setting, "id"))) {
+                            picture = string(setting, "value");
+                        } else if ("AppDisplayPicRaw".equals(string(setting, "id"))) {
+                            appPicture = string(setting, "value");
                         }
                     }
+                    BedrockPlayerImages.remember(string(profile, "id"), picture.isBlank() ? appPicture : picture);
                     final String name = displayName.isBlank() ? gamertag : displayName;
                     if (!name.isBlank()) {
                         names.put(string(profile, "id"), name);
@@ -248,6 +258,7 @@ public final class BedrockSocialService {
             if (xuid.isBlank()) {
                 continue;
             }
+            BedrockPlayerImages.remember(xuid, string(user, "displayPicRaw"));
             final String gamertag = string(user, "uniqueModernGamertag").isBlank()
                 ? string(user, "gamertag") : string(user, "uniqueModernGamertag");
             final JsonObject detail = user.has("detail") && user.get("detail").isJsonObject()
