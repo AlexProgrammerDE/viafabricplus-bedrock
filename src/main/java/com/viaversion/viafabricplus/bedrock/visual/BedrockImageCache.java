@@ -11,9 +11,11 @@
 package com.viaversion.viafabricplus.bedrock.visual;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -142,8 +144,9 @@ public final class BedrockImageCache {
                 try {
                     final byte[] bytes = source.read();
                     if (bytes.length > MAX_BYTES) throw new IOException("Image is too large");
-                    final NativeImage pixels = NativeImage.read(bytes);
                     final int limit = installedArt ? 4096 : 2048;
+                    final NativeImage pixels = NativeImage.read(isPng(bytes)
+                        ? bytes : convertImage(bytes, limit));
                     if (pixels.getWidth() > limit || pixels.getHeight() > limit) {
                         pixels.close();
                         throw new IOException("Image dimensions are too large");
@@ -171,6 +174,7 @@ public final class BedrockImageCache {
                 LOADING.remove(key);
                 if (error != null) {
                     FAILED.add(key);
+                    ViaFabricPlusBedrock.impl().logger().warn("Could not load Bedrock image", error);
                     return;
                 }
                 final Identifier id = Identifier.fromNamespaceAndPath("viafabricplus-bedrock",
@@ -185,6 +189,33 @@ public final class BedrockImageCache {
             }));
         }
         return false;
+    }
+
+    private static boolean isPng(final byte[] bytes) {
+        return bytes.length >= 8 && (bytes[0] & 0xFF) == 0x89 && bytes[1] == 'P'
+            && bytes[2] == 'N' && bytes[3] == 'G';
+    }
+
+    private static byte[] convertImage(final byte[] bytes, final int limit) throws IOException {
+        final BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+        if (image == null || image.getWidth() > limit || image.getHeight() > limit) {
+            throw new IOException("Invalid Bedrock image");
+        }
+        final int longest = Math.max(image.getWidth(), image.getHeight());
+        final double scale = Math.min(1D, 2048D / longest);
+        final int width = Math.max(1, (int) (image.getWidth() * scale));
+        final int height = Math.max(1, (int) (image.getHeight() * scale));
+        final BufferedImage converted = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D painter = converted.createGraphics();
+        try {
+            painter.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            painter.drawImage(image, 0, 0, width, height, null);
+        } finally {
+            painter.dispose();
+        }
+        final ByteArrayOutputStream output = new ByteArrayOutputStream();
+        if (!ImageIO.write(converted, "png", output)) throw new IOException("Could not encode Bedrock image");
+        return output.toByteArray();
     }
 
     @FunctionalInterface

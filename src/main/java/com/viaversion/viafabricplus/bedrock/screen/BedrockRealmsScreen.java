@@ -414,8 +414,9 @@ public final class BedrockRealmsScreen extends VFPScreen {
             context.text(font, version, entryWidth - font.width(version) - SLOT_MARGIN, SLOT_MARGIN, -1);
 
             final String motd = this.realmsServer.getMotd();
-            if (motd != null) {
-                this.renderScrollableText(context, Component.nullToEmpty(motd), 0);
+            if (motd != null && !motd.isBlank()) {
+                context.text(font, fit(font, motd, entryWidth - textX - SLOT_MARGIN), textX,
+                    entryHeight - font.lineHeight - SLOT_MARGIN, 0xFFD0D2D5);
             }
         }
 

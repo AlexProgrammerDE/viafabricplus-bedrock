@@ -57,8 +57,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.raphimc.minecraftauth.bedrock.BedrockAuthManager;
 import net.raphimc.minecraftauth.extra.realms.model.RealmsServer;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +73,6 @@ public final class BedrockRealmHubScreen extends VFPScreen {
     private static final int[] ACTIVITY_COLORS = {0xFF58C9CC, 0xFF9A75D9, 0xFFFFAC68, 0xFF9CDC6E};
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("EEE d");
     private static final DateTimeFormatter BACKUP_DATE = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm");
-    private static final ItemStack STORY_FALLBACK = new ItemStack(Items.PAINTING);
 
     private enum Tab { COMMUNITY, TIMELINE, WORLD, SETTINGS }
 
@@ -934,7 +931,10 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 final int artHeight = Math.min(height - 10, artWidth * 9 / 16);
                 if (!BedrockUiArt.drawEvent(graphics, this.title.replace(" ", ""), 5,
                     (height - artHeight) / 2, artWidth, artHeight)) {
-                    graphics.item(STORY_FALLBACK, 12, 10);
+                    final int artY = (height - artHeight) / 2;
+                    graphics.fill(5, artY, 5 + artWidth, artY + artHeight, 0xFF282234);
+                    graphics.centeredText(font, Component.literal("Story"), 5 + artWidth / 2,
+                        artY + (artHeight - font.lineHeight) / 2, 0xFFC9B4E9);
                 }
                 final int textX = artWidth + 13;
                 graphics.text(font, clip(font, this.title, width - textX - 8), textX, 8, color);
