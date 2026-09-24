@@ -21,8 +21,11 @@
 
 package com.viaversion.viafabricplus.bedrock.friends;
 
+import com.viaversion.viafabricplus.bedrock.render.BedrockPlayerSkins;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import java.util.Map;
+import java.util.UUID;
+import net.raphimc.viabedrock.protocol.model.SkinData;
 import net.raphimc.viabedrock.protocol.provider.SkinProvider;
 
 /** Adds the host-issued session nonce to Bedrock's client data for friend worlds. */
@@ -36,6 +39,11 @@ public final class FriendWorldSkinProvider extends SkinProvider {
             claims.put("Nonce", nonce);
         }
         return claims;
+    }
+
+    @Override
+    public void setSkin(final UserConnection user, final UUID playerUuid, final SkinData skin) {
+        BedrockPlayerSkins.accept(user, playerUuid, skin);
     }
 
 }
