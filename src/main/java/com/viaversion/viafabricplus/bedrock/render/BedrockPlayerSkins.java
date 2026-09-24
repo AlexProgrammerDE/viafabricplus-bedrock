@@ -74,8 +74,8 @@ public final class BedrockPlayerSkins {
             }
             final boolean slim = "slim".equalsIgnoreCase(skin.armSize()) || geometryName(skin).toLowerCase(Locale.ROOT).contains("slim");
             final PlayerModelType modelType = slim ? PlayerModelType.SLIM : PlayerModelType.WIDE;
-            final PlayerSkin playerSkin = PlayerSkin.insecure(new ClientAsset.ResourceTexture(bodyId),
-                capeId == null ? null : new ClientAsset.ResourceTexture(capeId), null, modelType);
+            final PlayerSkin playerSkin = PlayerSkin.insecure(new ClientAsset.ResourceTexture(bodyId, bodyId),
+                capeId == null ? null : new ClientAsset.ResourceTexture(capeId, capeId), null, modelType);
             final BedrockGeometryModel geometry = geometry(skin);
             APPEARANCES.put(playerUuid, new Appearance(playerSkin, geometry, slim, bodyId, capeId));
             PLAYER_BY_TEXTURE.put(bodyId, playerUuid);
