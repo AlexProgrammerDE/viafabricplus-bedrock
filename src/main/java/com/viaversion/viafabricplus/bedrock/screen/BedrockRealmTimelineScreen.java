@@ -23,7 +23,7 @@ package com.viaversion.viafabricplus.bedrock.screen;
 
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockContentImages;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 /** Explains Realm Timeline sharing before a member opts in. */
 public final class BedrockRealmTimelineScreen extends VFPScreen {
+
+    private static final String TIMELINE_IMAGE = "/assets/viafabricplus-bedrock/content/timeline-opt-in.png";
 
     private final BedrockRealmsService service;
     private final RealmsServer realm;
@@ -107,7 +109,7 @@ public final class BedrockRealmTimelineScreen extends VFPScreen {
         if (maxHeight >= 90) {
             final int imageWidth = Math.min(textWidth, Math.min(420, maxHeight * 16 / 9));
             final int imageHeight = imageWidth * 9 / 16;
-            BedrockContentImages.drawTimelineExample(graphics, (this.width - imageWidth) / 2,
+            BedrockImageCache.drawBundled(graphics, TIMELINE_IMAGE, (this.width - imageWidth) / 2,
                 imageTop, imageWidth, imageHeight);
         }
     }

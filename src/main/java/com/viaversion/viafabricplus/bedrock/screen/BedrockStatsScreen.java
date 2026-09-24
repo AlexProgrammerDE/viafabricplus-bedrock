@@ -25,7 +25,6 @@ import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Statistic;
-import com.viaversion.viafabricplus.bedrock.visual.BedrockContentImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -188,9 +187,7 @@ public final class BedrockStatsScreen extends VFPScreen {
         @Override
         public void mappedRender(final GuiGraphicsExtractor graphics, final int width, final int height) {
             final Font font = Minecraft.getInstance().font;
-            final int iconSize = height - SLOT_MARGIN * 2;
-            BedrockContentImages.drawStatisticIcon(graphics, this.stat, SLOT_MARGIN, SLOT_MARGIN, iconSize);
-            final int textX = SLOT_MARGIN + iconSize + 6;
+            final int textX = SLOT_MARGIN;
             final String label = Component.translatable("bedrock_stats.viafabricplus." + this.stat.name().toLowerCase()).getString();
             graphics.text(font, label, textX, SLOT_MARGIN + 1, -1);
             final String value = format(this.stat, this.player);

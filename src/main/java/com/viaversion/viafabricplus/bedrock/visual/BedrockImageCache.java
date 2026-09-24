@@ -94,33 +94,12 @@ public final class BedrockImageCache {
 
     public static boolean drawBundled(final GuiGraphicsExtractor graphics, final String resource,
                                       final int x, final int y, final int width, final int height) {
-        return draw(graphics, resource, () -> readBundled(resource), 4096, x, y, width, height);
-    }
-
-    public static boolean drawBundledSilhouette(final GuiGraphicsExtractor graphics, final String resource,
-                                                final int color, final int x, final int y, final int size) {
-        return draw(graphics, resource + ':' + color, () -> {
-            final BufferedImage original = ImageIO.read(new ByteArrayInputStream(readBundled(resource)));
-            if (original == null) throw new IOException("Invalid bundled icon");
-            final BufferedImage tinted = new BufferedImage(original.getWidth(), original.getHeight(),
-                BufferedImage.TYPE_INT_ARGB);
-            for (int row = 0; row < original.getHeight(); row++) {
-                for (int column = 0; column < original.getWidth(); column++) {
-                    tinted.setRGB(column, row,
-                        (original.getRGB(column, row) & 0xFF000000) | (color & 0x00FFFFFF));
-                }
+        return draw(graphics, resource, () -> {
+            try (InputStream stream = BedrockImageCache.class.getResourceAsStream(resource)) {
+                if (stream == null) throw new IOException("Bundled Bedrock image is missing");
+                return stream.readAllBytes();
             }
-            final ByteArrayOutputStream encoded = new ByteArrayOutputStream();
-            if (!ImageIO.write(tinted, "png", encoded)) throw new IOException("Could not encode bundled icon");
-            return encoded.toByteArray();
-        }, 2048, x, y, size, size);
-    }
-
-    private static byte[] readBundled(final String resource) throws IOException {
-        try (InputStream stream = BedrockImageCache.class.getResourceAsStream(resource)) {
-            if (stream == null) throw new IOException("Bundled Bedrock image is missing");
-            return stream.readAllBytes();
-        }
+        }, 4096, x, y, width, height);
     }
 
     public static boolean drawScreenshot(final GuiGraphicsExtractor graphics, final Path path, final int x,
