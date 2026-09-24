@@ -26,6 +26,7 @@ import com.viaversion.viafabricplus.bedrock.friends.BedrockXboxError;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService;
 import com.viaversion.viafabricplus.bedrock.profile.BedrockProfileService.Achievement;
 import com.viaversion.viafabricplus.bedrock.visual.BedrockImageCache;
+import com.viaversion.viafabricplus.bedrock.visual.BedrockFallbackImages;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -166,8 +167,10 @@ public final class BedrockAchievementsScreen extends VFPScreen {
             final String score = this.achievement.gamerscore() == 0 ? ""
                 : this.achievement.gamerscore() + " G";
             final int iconSize = height - SLOT_MARGIN * 2;
-            BedrockImageCache.drawRemote(graphics, this.achievement.iconUrl(), SLOT_MARGIN,
-                SLOT_MARGIN, iconSize, iconSize);
+            if (!BedrockImageCache.drawRemote(graphics, this.achievement.iconUrl(), SLOT_MARGIN,
+                SLOT_MARGIN, iconSize, iconSize)) {
+                BedrockFallbackImages.drawAchievementIcon(graphics, SLOT_MARGIN, SLOT_MARGIN, iconSize);
+            }
             final int textX = SLOT_MARGIN + iconSize + 6;
             final int textWidth = width - textX - SLOT_MARGIN - font.width(score) - 12;
             graphics.text(font, fit(font, this.achievement.name(), textWidth), textX, SLOT_MARGIN + 1, -1);
