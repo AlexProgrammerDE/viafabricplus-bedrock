@@ -34,13 +34,14 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.model.Model;
-import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.core.ClientAsset;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
 import org.jspecify.annotations.NonNull;
 
 /** Selects a classic Bedrock skin and cape for the next connection. */
@@ -56,8 +57,7 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
 
     private Appearance appearance;
     private Component status = Component.translatable("bedrock_dressing_room.viafabricplus.reconnect");
-    private Model.Simple wideModel;
-    private Model.Simple slimModel;
+    private PlayerSkin previewSkin;
     private Button customButton;
     private Button modelButton;
     private Button removeCapeButton;
@@ -71,20 +71,18 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
     @Override
     protected void init() {
         super.init();
-        this.wideModel = new Model.Simple(this.minecraft.getEntityModels().bakeLayer(ModelLayers.PLAYER), RenderTypes::entityTranslucent);
-        this.slimModel = new Model.Simple(this.minecraft.getEntityModels().bakeLayer(ModelLayers.PLAYER_SLIM), RenderTypes::entityTranslucent);
-
         final int left = this.width / 2 - 150;
+        final int top = this.contentTop();
         final int buttonWidth = 96;
         this.addRenderableWidget(Button.builder(Component.translatable("bedrock_dressing_room.viafabricplus.steve"), _ -> this.select(Selection.STEVE))
-            .bounds(left, 44, buttonWidth, 20).build());
+            .bounds(left, top, buttonWidth, 20).build());
         this.addRenderableWidget(Button.builder(Component.translatable("bedrock_dressing_room.viafabricplus.alex"), _ -> this.select(Selection.ALEX))
-            .bounds(left + 102, 44, buttonWidth, 20).build());
+            .bounds(left + 102, top, buttonWidth, 20).build());
         this.customButton = this.addRenderableWidget(Button.builder(Component.translatable("bedrock_dressing_room.viafabricplus.custom"),
-            _ -> this.select(Selection.CUSTOM)).bounds(left + 204, 44, buttonWidth, 20).build());
+            _ -> this.select(Selection.CUSTOM)).bounds(left + 204, top, buttonWidth, 20).build());
 
         this.modelButton = this.addRenderableWidget(Button.builder(Component.empty(), _ -> this.toggleModel())
-            .bounds(left + 157, 93, 143, 20).build());
+            .bounds(left + 157, top + 53, 143, 20).build());
 
         this.addFooter(
             Button.builder(Component.translatable("bedrock_dressing_room.viafabricplus.import_skin"), _ -> this.chooseFile(false)).build(),
@@ -94,6 +92,10 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
 
         try {
             this.showAppearance(this.store.load(this.accountId));
+            final PlayerSkinWidget preview = new PlayerSkinWidget(145, this.previewHeight(), this.minecraft.getEntityModels(), () -> this.previewSkin);
+            preview.setX(left);
+            preview.setY(top + 30);
+            this.addRenderableWidget(preview);
         } catch (IOException e) {
             ViaFabricPlusBedrock.impl().logger().warn("Could not load the selected Bedrock appearance", e);
             this.status = Component.translatable("bedrock_dressing_room.viafabricplus.load_failed");
@@ -106,24 +108,29 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
         this.renderScreenTitle(graphics);
 
         final int left = this.width / 2 - 150;
-        if (this.appearance != null && this.previewRegistered) {
-            graphics.skin(this.appearance.effectiveSlim() ? this.slimModel : this.wideModel, PREVIEW_TEXTURE,
-                3.1F, 5, 25, 0, left + 8, 72, left + 145, Math.min(this.height - 60, 180));
-        }
+        final int previewTop = this.contentTop() + 30;
         if (this.appearance != null) {
             graphics.text(this.font, Component.translatable("bedrock_dressing_room.viafabricplus.selected",
                 Component.translatable("bedrock_dressing_room.viafabricplus." + this.appearance.selection().name().toLowerCase(Locale.ROOT))),
-                left + 157, 76, -1);
+                left + 157, previewTop + 4, -1);
             graphics.text(this.font, Component.translatable(this.appearance.cape() == null
                 ? "bedrock_dressing_room.viafabricplus.no_cape" : "bedrock_dressing_room.viafabricplus.cape_selected"),
-                left + 157, 123, -1);
-            if (this.capePreviewRegistered) {
-                graphics.blit(RenderPipelines.GUI_TEXTURED, CAPE_PREVIEW_TEXTURE, left + 157, 140, 0, 0,
+                left + 157, previewTop + 56, -1);
+            if (this.capePreviewRegistered && this.previewHeight() >= 130) {
+                graphics.blit(RenderPipelines.GUI_TEXTURED, CAPE_PREVIEW_TEXTURE, left + 157, previewTop + 74, 0, 0,
                     64, 32, this.appearance.cape().getWidth(), this.appearance.cape().getHeight(),
                     this.appearance.cape().getWidth(), this.appearance.cape().getHeight());
             }
         }
-        graphics.textWithWordWrap(this.font, this.status, left, this.height - 55, 300, ACCENT_COLOR);
+        graphics.textWithWordWrap(this.font, this.status, left, previewTop + this.previewHeight() + 6, 300, ACCENT_COLOR);
+    }
+
+    private int contentTop() {
+        return Math.max(88, (this.height - 250) / 2);
+    }
+
+    private int previewHeight() {
+        return Math.min(200, Math.max(60, this.height - this.contentTop() - 90));
     }
 
     @Override
@@ -215,6 +222,9 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
             this.registerPreview(CAPE_PREVIEW_TEXTURE, appearance.cape());
             this.capePreviewRegistered = true;
         }
+        this.previewSkin = PlayerSkin.insecure(new ClientAsset.ResourceTexture(PREVIEW_TEXTURE, PREVIEW_TEXTURE),
+            appearance.cape() == null ? null : new ClientAsset.ResourceTexture(CAPE_PREVIEW_TEXTURE, CAPE_PREVIEW_TEXTURE),
+            null, appearance.effectiveSlim() ? PlayerModelType.SLIM : PlayerModelType.WIDE);
         this.customButton.active = appearance.selection() == Selection.CUSTOM || this.store.hasCustomSkin(this.accountId);
         this.modelButton.active = appearance.selection() == Selection.CUSTOM;
         this.modelButton.setMessage(Component.translatable(appearance.effectiveSlim()
