@@ -24,14 +24,11 @@ import com.viaversion.viafabricplus.bedrock.appearance.BedrockAppearanceStore;
 import com.viaversion.viafabricplus.bedrock.appearance.BedrockAppearanceStore.Appearance;
 import com.viaversion.viafabricplus.bedrock.appearance.BedrockAppearanceStore.Selection;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
-import java.awt.FileDialog;
-import java.awt.Frame;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.PlayerSkinWidget;
@@ -43,6 +40,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.entity.player.PlayerSkin;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.nfd.NFDFilterItem;
+import org.lwjgl.util.nfd.NativeFileDialog;
 
 /** Selects a classic Bedrock skin and cape for the next connection. */
 public final class BedrockDressingRoomScreen extends VFPScreen {
@@ -176,33 +178,32 @@ public final class BedrockDressingRoomScreen extends VFPScreen {
     }
 
     private void chooseFile(final boolean cape) {
-        Thread.ofPlatform().name("Bedrock appearance file picker").start(() -> {
-            Frame frame = null;
-            try {
-                frame = new Frame();
-                final FileDialog dialog = new FileDialog(frame, cape ? "Choose a cape PNG" : "Choose a skin PNG", FileDialog.LOAD);
-                dialog.setFilenameFilter((_, name) -> name.toLowerCase(Locale.ROOT).endsWith(".png"));
-                dialog.setVisible(true);
-                if (dialog.getFile() != null) {
-                    final Path path = Path.of(dialog.getDirectory(), dialog.getFile());
-                    Minecraft.getInstance().execute(() -> {
-                        if (Minecraft.getInstance().gui.screen() == this) {
-                            this.importFile(path, cape);
-                        }
-                    });
-                }
-            } catch (RuntimeException e) {
-                Minecraft.getInstance().execute(() -> {
-                    if (Minecraft.getInstance().gui.screen() == this) {
-                        this.failed(new IOException("Could not open the file picker", e));
-                    }
-                });
-            } finally {
-                if (frame != null) {
-                    frame.dispose();
-                }
+        try {
+            if (NativeFileDialog.NFD_Init() != NativeFileDialog.NFD_OKAY) {
+                throw new IOException("Could not initialize the file picker: " + NativeFileDialog.NFD_GetError());
             }
-        });
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                final PointerBuffer selected = stack.mallocPointer(1);
+                final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(1, stack);
+                filters.get(0).name(stack.UTF8("PNG images")).spec(stack.UTF8("png"));
+                final int result = NativeFileDialog.NFD_OpenDialog(selected, filters, (CharSequence) null);
+                if (result == NativeFileDialog.NFD_ERROR) {
+                    throw new IOException("Could not open the file picker: " + NativeFileDialog.NFD_GetError());
+                }
+                if (result == NativeFileDialog.NFD_OKAY) {
+                    final long nativePath = selected.get(0);
+                    try {
+                        this.importFile(Path.of(MemoryUtil.memUTF8(nativePath)), cape);
+                    } finally {
+                        NativeFileDialog.NFD_FreePath(nativePath);
+                    }
+                }
+            } finally {
+                NativeFileDialog.NFD_Quit();
+            }
+        } catch (IOException | RuntimeException | LinkageError e) {
+            this.failed(e instanceof IOException io ? io : new IOException("Could not open the file picker", e));
+        }
     }
 
     private void importFile(final Path path, final boolean cape) {

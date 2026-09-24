@@ -53,6 +53,15 @@ dependencies {
         exclude(group = "dev.opencollab", module = "libdatachannel-java")
     }
     shade("dev.opencollab:libdatachannel-java-arch-detect:0.24.5.0-20260921.140330-12")
+
+    shade("org.lwjgl:lwjgl-nfd:3.4.3") {
+        isTransitive = false
+    }
+    for (platform in listOf("linux", "linux-arm64", "macos", "macos-arm64", "windows", "windows-arm64")) {
+        shade("org.lwjgl:lwjgl-nfd:3.4.3:natives-$platform") {
+            isTransitive = false
+        }
+    }
 }
 
 includeTransitiveJijDependencies()

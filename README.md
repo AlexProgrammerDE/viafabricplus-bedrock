@@ -19,6 +19,8 @@ server. `Bedrock Realms` and `Bedrock Friends` in the ViaFabricPlus screen stay 
 Open the `Bedrock` settings tab and select `Dressing Room`. Choose Steve or Alex, or import a custom skin PNG.
 For a custom skin, choose the wide or slim model. You can also import or remove a cape PNG.
 The screen previews the selected skin and cape. Your choice takes effect the next time you join a Bedrock world.
+An imported cape is sent with your Bedrock appearance. It does not unlock an account cape, and other servers or clients
+may choose not to show it.
 
 Skin PNGs must be square, from 64 × 64 to 1024 × 1024 pixels. Cape PNGs must be twice as wide as they are tall,
 from 64 × 32 to 1024 × 512 pixels. The Dressing Room keeps one imported skin per account.
