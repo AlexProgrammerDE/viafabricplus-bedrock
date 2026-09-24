@@ -743,7 +743,6 @@ public final class BedrockRealmHubScreen extends VFPScreen {
             this.minecraft.gui.setScreen(this);
             if (confirmed) this.mutate(this.service.changeDefaultPermission(next), () -> {
                 this.defaultPermission = next;
-                BedrockRealmsScreen.invalidate();
             });
         }, Component.literal("Change default player permission?"),
             Component.literal("New members will join as " + next.toLowerCase(Locale.ROOT) + ".")));
