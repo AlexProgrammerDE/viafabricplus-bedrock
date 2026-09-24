@@ -29,6 +29,7 @@ import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
 import com.viaversion.viafabricplus.bedrock.friends.BedrockSocialService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmHubService;
 import com.viaversion.viafabricplus.bedrock.realms.BedrockRealmsError;
+import com.viaversion.viafabricplus.bedrock.realms.BedrockRelativeTime;
 import com.viaversion.viafabricplus.screen.base.VFPScreen;
 import com.viaversion.viafabricplus.screen.base.list.VFPList;
 import com.viaversion.viafabricplus.screen.base.list.VFPListEntry;
@@ -859,6 +860,7 @@ public final class BedrockRealmHubScreen extends VFPScreen {
         private final String title;
         private final String description;
         private final String detail;
+        private final @Nullable Instant eventTimestamp;
 
         private HubEntry(final String kind, final String id, final String title,
                          final String description, final String detail) {
@@ -867,11 +869,18 @@ public final class BedrockRealmHubScreen extends VFPScreen {
             this.title = title;
             this.description = description;
             this.detail = detail;
+            this.eventTimestamp = kind.equals("story") ? BedrockRelativeTime.parse(detail) : null;
+        }
+
+        private String displayDetail() {
+            return this.kind.equals("story")
+                ? BedrockRelativeTime.format(this.eventTimestamp, Instant.now(), ZoneId.systemDefault())
+                : this.detail;
         }
 
         @Override
         public @NonNull Component getNarration() {
-            return Component.literal(this.title + " " + this.description + " " + this.detail);
+            return Component.literal(this.title + " " + this.description + " " + this.displayDetail());
         }
 
         @Override
@@ -884,7 +893,8 @@ public final class BedrockRealmHubScreen extends VFPScreen {
                 return;
             }
             graphics.text(font, clip(font, this.title, width - 130), 7, 4, color);
-            if (!this.detail.isBlank()) graphics.text(font, clip(font, this.detail, 120), width - 125, 4, SECONDARY);
+            final String displayDetail = this.displayDetail();
+            if (!displayDetail.isBlank()) graphics.text(font, clip(font, displayDetail, 120), width - 125, 4, SECONDARY);
             if (!this.description.isBlank()) graphics.text(font, clip(font, this.description, width - 15), 7,
                 5 + font.lineHeight, SECONDARY);
         }
