@@ -69,7 +69,7 @@ public final class BedrockPartyChat implements WebSocket.Listener {
     public CompletableFuture<Void> connect() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return this.account.getMinecraftSession().refresh().getAuthorizationHeader();
+                return this.account.getMinecraftSession().getUpToDate().getAuthorizationHeader();
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not authenticate party chat", exception);
             }

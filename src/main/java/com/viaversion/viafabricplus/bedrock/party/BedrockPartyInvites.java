@@ -81,7 +81,7 @@ public final class BedrockPartyInvites {
     private static void connect(final BedrockAuthManager selectedAccount) {
         HubConnection hub = null;
         try {
-            final PlayFabEntityToken token = selectedAccount.getPlayFabToken().refresh().getEntityToken();
+            final PlayFabEntityToken token = selectedAccount.getPlayFabToken().getUpToDate().getEntityToken();
             hub = HubConnectionBuilder.create(HUB.toString())
                 .withHeader("X-EntityToken", token.getToken())
                 .withHeader("X-PlayFabSDK", "PlayFabMultiplayerSDK.WinGameCore-1.8.0")

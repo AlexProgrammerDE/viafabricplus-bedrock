@@ -73,7 +73,7 @@ public final class BedrockPartyService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 final JsonObject body = new JsonObject();
-                body.addProperty("xboxToken", account.getPlayFabXstsToken().refresh().getAuthorizationHeader());
+                body.addProperty("xboxToken", account.getPlayFabXstsToken().getUpToDate().getAuthorizationHeader());
                 body.addProperty("maxResults", 50);
                 body.addProperty("includeFullParties", false);
                 final JsonObject response = partyRequest(account, "party/findJoinable", body);
@@ -109,7 +109,7 @@ public final class BedrockPartyService {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 final JsonObject body = new JsonObject();
-                body.addProperty("xboxToken", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader());
+                body.addProperty("xboxToken", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader());
                 body.add("memberData", memberData(account));
                 return enter(account, result(partyRequest(account, "party/" + partyId(partyId) + "/join", body)));
             } catch (Exception exception) {
@@ -165,7 +165,7 @@ public final class BedrockPartyService {
                 final JsonObject body = new JsonObject();
                 body.addProperty("playerId", xuid);
                 if (operation.equals("invite")) {
-                    body.addProperty("xboxToken", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader());
+                    body.addProperty("xboxToken", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader());
                 } else if (operation.equals("remove")) {
                     body.addProperty("preventRejoin", preventRejoin);
                 }
@@ -268,7 +268,7 @@ public final class BedrockPartyService {
         throws IOException {
         return HttpRequest.newBuilder(endpoint)
             .timeout(Duration.ofSeconds(15))
-            .header("X-EntityToken", account.getPlayFabToken().refresh().getEntityToken().getToken())
+            .header("X-EntityToken", account.getPlayFabToken().getUpToDate().getEntityToken().getToken())
             .header("X-PlayFabSDK", "PlayFabMultiplayerSDK.WinGameCore-1.8.0")
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
@@ -344,7 +344,7 @@ public final class BedrockPartyService {
         final HttpRequest.Builder builder = HttpRequest.newBuilder(MULTIPLAYER.resolve(path))
             .version(HttpClient.Version.HTTP_1_1)
             .timeout(Duration.ofSeconds(15))
-            .header("Authorization", account.getMinecraftSession().refresh().getAuthorizationHeader())
+            .header("Authorization", account.getMinecraftSession().getUpToDate().getAuthorizationHeader())
             .header("Accept", "application/json")
             .header("session-id", UUID.randomUUID().toString());
         if (body == null) {

@@ -121,7 +121,7 @@ public final class BedrockStatsScreen extends VFPScreen {
             return;
         }
         this.ownFailed = false;
-        account.getXboxUserProfile().refreshAsync().thenCompose(profile ->
+        account.getXboxUserProfile().getUpToDateAsync().thenCompose(profile ->
             BedrockProfileService.statistics(account, profile.getId())).thenAcceptAsync(stats -> {
                 if (ViaFabricPlusBedrock.impl().account().get() == account) {
                     this.ownStats = stats;

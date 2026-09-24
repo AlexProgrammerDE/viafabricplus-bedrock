@@ -66,6 +66,7 @@ public final class BedrockPartyScreen extends VFPScreen {
     private static final long MEMBERS_REFRESH = TimeUnit.SECONDS.toNanos(5);
     private static final long MEMBERS_RETRY_DELAY = TimeUnit.SECONDS.toNanos(30);
     private static final long DISCOVERY_REFRESH = TimeUnit.SECONDS.toNanos(30);
+    private static final long DISCOVERY_RATE_LIMIT_RETRY = TimeUnit.MINUTES.toNanos(2);
 
     private View view = View.FIND;
     private @Nullable List<Party> joinable;
@@ -82,6 +83,7 @@ public final class BedrockPartyScreen extends VFPScreen {
     private boolean invitesStarted;
     private boolean busy;
     private boolean findFailed;
+    private boolean findRateLimited;
     private boolean membersFailed;
     private long lastMembersRefresh;
     private long lastDiscoveryRefresh;
@@ -152,7 +154,7 @@ public final class BedrockPartyScreen extends VFPScreen {
         if (!this.invitesFailed && !this.invitesStarted) {
             this.loadInvites();
         }
-        if (this.view == View.FIND && this.joinable == null) {
+        if (this.view == View.FIND && this.joinable == null && !this.findFailed) {
             this.find();
         }
         if (this.view == View.INVITE && this.friends == null) {
@@ -191,7 +193,8 @@ public final class BedrockPartyScreen extends VFPScreen {
             case INVITES, INVITE, CHAT -> false;
         };
         this.refreshButton.active = !this.busy && !this.finding && !this.loadingFriends && !this.refreshing
-            && !this.loadingInvites;
+            && !this.loadingInvites && !(this.view == View.FIND && this.findRateLimited
+                && System.nanoTime() - this.lastDiscoveryRefresh < DISCOVERY_REFRESH);
         if (this.privacyButton != null) {
             this.privacyButton.active = active && leader && !this.busy;
             this.privacyButton.setMessage(Component.translatable(party != null && party.open()
@@ -247,7 +250,7 @@ public final class BedrockPartyScreen extends VFPScreen {
             return;
         }
         this.loadingSelf = true;
-        account.getXboxUserProfile().refreshAsync().thenAcceptAsync(profile -> {
+        account.getXboxUserProfile().getUpToDateAsync().thenAcceptAsync(profile -> {
             this.loadingSelf = false;
             if (this.account() == account) {
                 this.selfXuid = profile.getId();
@@ -306,6 +309,7 @@ public final class BedrockPartyScreen extends VFPScreen {
         }
         this.finding = true;
         this.findFailed = false;
+        this.findRateLimited = false;
         this.lastDiscoveryRefresh = System.nanoTime();
         BedrockPartyService.findJoinable(account).thenAcceptAsync(parties -> {
             this.finding = false;
@@ -317,6 +321,10 @@ public final class BedrockPartyScreen extends VFPScreen {
             }
         }, Minecraft.getInstance()).exceptionally(error -> {
             this.findFailed = true;
+            this.findRateLimited = BedrockXboxError.isRateLimited(error);
+            if (this.findRateLimited) {
+                this.lastDiscoveryRefresh = System.nanoTime() + DISCOVERY_RATE_LIMIT_RETRY - DISCOVERY_REFRESH;
+            }
             return this.fail("Failed to find Bedrock parties", error);
         });
     }
@@ -583,8 +591,9 @@ public final class BedrockPartyScreen extends VFPScreen {
 
         private void findEntries() {
             if (BedrockPartyScreen.this.joinable == null) {
-                this.addEntry(new VFPTextEntry(Component.translatable(BedrockPartyScreen.this.findFailed
-                    ? "bedrock_party.viafabricplus.load_failed" : "bedrock_party.viafabricplus.loading")));
+                this.addEntry(new VFPTextEntry(Component.translatable(BedrockPartyScreen.this.findRateLimited
+                    ? "bedrock_party.viafabricplus.rate_limited" : BedrockPartyScreen.this.findFailed
+                        ? "bedrock_party.viafabricplus.load_failed" : "bedrock_party.viafabricplus.loading")));
             } else if (BedrockPartyScreen.this.joinable.isEmpty()) {
                 this.addEntry(new VFPTextEntry(Component.translatable("bedrock_party.viafabricplus.none")));
             } else {

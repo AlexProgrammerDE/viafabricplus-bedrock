@@ -56,7 +56,7 @@ public final class BedrockSocialService {
     public static CompletableFuture<List<SocialUser>> friends(final BedrockAuthManager account) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return users(PEOPLE.resolve("friends" + DECORATIONS), account.getXboxLiveXstsToken().refresh());
+                return users(PEOPLE.resolve("friends" + DECORATIONS), account.getXboxLiveXstsToken().getUpToDate());
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not load Xbox friends", exception);
             }
@@ -66,7 +66,7 @@ public final class BedrockSocialService {
     public static CompletableFuture<FriendRequests> requests(final BedrockAuthManager account) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final XblXstsToken token = account.getXboxLiveXstsToken().refresh();
+                final XblXstsToken token = account.getXboxLiveXstsToken().getUpToDate();
                 return new FriendRequests(
                     users(PEOPLE.resolve("friendRequests(received)" + DECORATIONS), token),
                     users(PEOPLE.resolve("friendRequests(sent)" + DECORATIONS), token)
@@ -82,7 +82,7 @@ public final class BedrockSocialService {
             try {
                 final String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
                 final URI uri = PEOPLE.resolve("search/decoration/detail,preferredColor?q=" + encoded);
-                return users(uri, account.getXboxLiveXstsToken().refresh());
+                return users(uri, account.getXboxLiveXstsToken().getUpToDate());
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not search Xbox players", exception);
             }
@@ -104,7 +104,7 @@ public final class BedrockSocialService {
     private static CompletableFuture<List<SocialUser>> list(final BedrockAuthManager account, final String path, final String error) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                return users(PEOPLE.resolve(path + DECORATIONS), account.getXboxLiveXstsToken().refresh());
+                return users(PEOPLE.resolve(path + DECORATIONS), account.getXboxLiveXstsToken().getUpToDate());
             } catch (Exception exception) {
                 throw new IllegalStateException(error, exception);
             }
@@ -124,7 +124,7 @@ public final class BedrockSocialService {
                 final HttpRequest request = HttpRequest.newBuilder(PEOPLE.resolve("favorites/xuids?method=" + (add ? "add" : "remove")))
                     .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
+                    .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
                     .header("X-Xbl-Contract-Version", "7")
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
@@ -161,7 +161,7 @@ public final class BedrockSocialService {
                 body.add("settings", settings);
                 final HttpRequest request = HttpRequest.newBuilder(PROFILES)
                     .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
+                    .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
                     .header("X-Xbl-Contract-Version", "2")
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
@@ -207,7 +207,7 @@ public final class BedrockSocialService {
                     // Xbox requires Content-Length: 0 here; Java's HTTP/2 request omits it and receives 411.
                     .version(HttpClient.Version.HTTP_1_1)
                     .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
+                    .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
                     .header("X-Xbl-Contract-Version", "3")
                     .header("Accept", "application/json")
                     .header("Cache-Control", "no-cache")

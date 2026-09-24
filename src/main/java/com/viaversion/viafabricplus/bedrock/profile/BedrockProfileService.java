@@ -47,6 +47,8 @@ public final class BedrockProfileService {
     private static final URI ACHIEVEMENTS = URI.create("https://achievements.xboxlive.com/");
     private static final URI USER_STATS = URI.create("https://userstats.xboxlive.com/");
     private static final String MINECRAFT_WINDOWS_TITLE_ID = "896928775";
+    // The achievement list can be empty for a player, so it cannot be used to discover this SCID.
+    private static final String MINECRAFT_SERVICE_CONFIG_ID = "4fc10100-5f7a-4470-899b-280835760c07";
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     private BedrockProfileService() {
@@ -55,7 +57,7 @@ public final class BedrockProfileService {
     public static CompletableFuture<List<Achievement>> achievements(final BedrockAuthManager account) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final String xuid = account.getXboxUserProfile().refresh().getId();
+                final String xuid = account.getXboxUserProfile().getUpToDate().getId();
                 if (!xuid.matches("[0-9]+")) {
                     throw new IOException("Xbox returned an invalid user ID");
                 }
@@ -67,7 +69,7 @@ public final class BedrockProfileService {
                         + URLEncoder.encode(continuation, StandardCharsets.UTF_8));
                     final HttpRequest request = HttpRequest.newBuilder(ACHIEVEMENTS.resolve(path))
                         .timeout(Duration.ofSeconds(15))
-                        .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
+                        .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
                         .header("X-Xbl-Contract-Version", "2")
                         .header("Accept", "application/json")
                         .header("Accept-Language", "en-US,en;q=0.9")
@@ -115,28 +117,11 @@ public final class BedrockProfileService {
         }
         return CompletableFuture.supplyAsync(() -> {
             try {
-                final String ownXuid = account.getXboxUserProfile().refresh().getId();
-                final HttpRequest titleRequest = HttpRequest.newBuilder(ACHIEVEMENTS.resolve("users/xuid("
-                        + ownXuid + ")/achievements?titleId=" + MINECRAFT_WINDOWS_TITLE_ID + "&maxItems=1"))
-                    .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
-                    .header("X-Xbl-Contract-Version", "2")
-                    .header("Accept", "application/json")
-                    .GET().build();
-                final JsonObject title = send("Minecraft title details", titleRequest);
-                final JsonArray titleAchievements = array(title, "achievements");
-                if (titleAchievements.isEmpty()) {
-                    throw new IOException("Minecraft has no achievement service configuration");
-                }
-                final String scid = string(titleAchievements.get(0).getAsJsonObject(), "serviceConfigId");
-                if (!scid.matches("[0-9a-fA-F-]{36}")) {
-                    throw new IOException("Xbox returned an invalid service configuration ID");
-                }
-                final String path = "users/xuid(" + xuid + ")/scids/" + scid
+                final String path = "users/xuid(" + xuid + ")/scids/" + MINECRAFT_SERVICE_CONFIG_ID
                     + "/stats/MinutesPlayed,BlockBroken,MobKilled,DistanceTravelled";
                 final HttpRequest request = HttpRequest.newBuilder(USER_STATS.resolve(path))
                     .timeout(Duration.ofSeconds(15))
-                    .header("Authorization", account.getXboxLiveXstsToken().refresh().getAuthorizationHeader())
+                    .header("Authorization", account.getXboxLiveXstsToken().getUpToDate().getAuthorizationHeader())
                     .header("Accept", "application/json")
                     .GET().build();
                 final JsonObject response = send("Minecraft statistics", request);

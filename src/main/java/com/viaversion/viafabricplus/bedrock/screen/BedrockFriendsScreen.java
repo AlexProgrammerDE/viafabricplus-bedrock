@@ -230,7 +230,7 @@ public final class BedrockFriendsScreen extends VFPScreen {
             return;
         }
         this.selfLoading = true;
-        account.getXboxUserProfile().refreshAsync().thenAcceptAsync(profile -> {
+        account.getXboxUserProfile().getUpToDateAsync().thenAcceptAsync(profile -> {
             this.selfLoading = false;
             if (ViaFabricPlusBedrock.impl().account().get() == account) {
                 final String name = ViaFabricPlusBedrock.impl().account().displayName();
