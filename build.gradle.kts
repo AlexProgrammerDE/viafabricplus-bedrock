@@ -33,6 +33,8 @@ val shade = configureJarInJar()
 
 dependencies {
     implementation("com.viaversion:viafabricplus:5.1.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.12.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     shade("net.raphimc:ViaBedrock:0.0.31-SNAPSHOT") {
         exclude(group = "com.mojang", module = "brigadier")
@@ -54,3 +56,7 @@ dependencies {
 }
 
 includeTransitiveJijDependencies()
+
+tasks.test {
+    useJUnitPlatform()
+}

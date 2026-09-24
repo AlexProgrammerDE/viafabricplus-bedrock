@@ -24,7 +24,8 @@ package com.viaversion.viafabricplus.bedrock;
 import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.api.entrypoint.ViaFabricPlusEntrypoint;
 import com.viaversion.viafabricplus.bedrock.account.BedrockAccount;
-import com.viaversion.viafabricplus.bedrock.friends.FriendWorldSkinProvider;
+import com.viaversion.viafabricplus.bedrock.appearance.BedrockAppearanceStore;
+import com.viaversion.viafabricplus.bedrock.appearance.ViaFabricPlusSkinProvider;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.platform.ViaFabricPlusNettyPipelineProvider;
 import com.viaversion.viafabricplus.bedrock.protocoltranslator.platform.ViaFabricPlusViaBedrockPlatform;
 import com.viaversion.viafabricplus.bedrock.settings.BedrockSettings;
@@ -42,6 +43,7 @@ public final class ViaFabricPlusBedrock implements ViaFabricPlusEntrypoint {
 
     private BedrockSettings settings;
     private BedrockAccount account;
+    private BedrockAppearanceStore appearances;
 
     public ViaFabricPlusBedrock() {
         INSTANCE = this;
@@ -51,13 +53,14 @@ public final class ViaFabricPlusBedrock implements ViaFabricPlusEntrypoint {
     public void onPreSettingsLoading() {
         this.settings = new BedrockSettings();
         this.account = new BedrockAccount(ViaFabricPlus.api().path().resolve("bedrock.json"));
+        this.appearances = new BedrockAppearanceStore(ViaFabricPlus.api().path().resolve("bedrock-appearances"));
     }
 
     @Override
     public void onPostProtocolTranslationLoading() {
         new ViaFabricPlusViaBedrockPlatform();
         Via.getManager().getProviders().use(NettyPipelineProvider.class, new ViaFabricPlusNettyPipelineProvider());
-        Via.getManager().getProviders().use(SkinProvider.class, new FriendWorldSkinProvider());
+        Via.getManager().getProviders().use(SkinProvider.class, new ViaFabricPlusSkinProvider());
     }
 
     public static ViaFabricPlusBedrock impl() {
@@ -74,6 +77,10 @@ public final class ViaFabricPlusBedrock implements ViaFabricPlusEntrypoint {
 
     public BedrockAccount account() {
         return this.account;
+    }
+
+    public BedrockAppearanceStore appearances() {
+        return this.appearances;
     }
 
 }

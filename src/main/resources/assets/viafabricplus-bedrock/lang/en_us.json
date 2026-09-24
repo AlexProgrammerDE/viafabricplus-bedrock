@@ -6,6 +6,8 @@
   "bedrock_settings.viafabricplus": "Bedrock",
   "bedrock_settings.viafabricplus.account": "Account for Bedrock Edition",
   "bedrock_settings.viafabricplus.account.login": "Click to log in",
+  "bedrock_settings.viafabricplus.dressing_room": "Dressing Room",
+  "bedrock_settings.viafabricplus.dressing_room.open": "Open",
   "bedrock_settings.viafabricplus.replace_default_port": "Replace default port in server list",
   "bedrock_settings.viafabricplus.experimental_features": "Enable experimental features (may be unstable)",
 
@@ -13,7 +15,23 @@
 
   "screen.viafabricplus.bedrock_realms": "Bedrock Realms",
   "screen.viafabricplus.bedrock_friends": "Bedrock Friends",
+  "screen.viafabricplus.bedrock_dressing_room": "Bedrock Dressing Room",
   "screen.viafabricplus.accept_invite": "Accept an invitation code",
+
+  "bedrock_dressing_room.viafabricplus.steve": "Steve",
+  "bedrock_dressing_room.viafabricplus.alex": "Alex",
+  "bedrock_dressing_room.viafabricplus.custom": "Custom",
+  "bedrock_dressing_room.viafabricplus.selected": "Skin: %s",
+  "bedrock_dressing_room.viafabricplus.slim": "Model: Slim",
+  "bedrock_dressing_room.viafabricplus.wide": "Model: Wide",
+  "bedrock_dressing_room.viafabricplus.no_cape": "Cape: None",
+  "bedrock_dressing_room.viafabricplus.cape_selected": "Cape: Custom",
+  "bedrock_dressing_room.viafabricplus.import_skin": "Import skin",
+  "bedrock_dressing_room.viafabricplus.import_cape": "Import cape",
+  "bedrock_dressing_room.viafabricplus.remove_cape": "Remove cape",
+  "bedrock_dressing_room.viafabricplus.reconnect": "Applies when you next join a Bedrock world.",
+  "bedrock_dressing_room.viafabricplus.load_failed": "Could not load your saved appearance. Check the log.",
+  "bedrock_dressing_room.viafabricplus.one_file": "Drop one skin PNG at a time.",
 
   "bedrock_realms.viafabricplus.warning": "This feature requires a Bedrock Edition account to be set in the settings!",
   "bedrock_realms.viafabricplus.availability_check": "Checking availability...",

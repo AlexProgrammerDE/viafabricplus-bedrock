@@ -25,8 +25,10 @@ import com.viaversion.viafabricplus.ViaFabricPlus;
 import com.viaversion.viafabricplus.api.settings.base.BooleanSetting;
 import com.viaversion.viafabricplus.api.settings.base.SettingGroup;
 import com.viaversion.viafabricplus.bedrock.ViaFabricPlusBedrock;
+import com.viaversion.viafabricplus.bedrock.screen.BedrockDressingRoomScreen;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import java.util.Objects;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.raphimc.viabedrock.api.BedrockProtocolVersion;
 import net.raphimc.viabedrock.protocol.data.ProtocolConstants;
@@ -39,6 +41,9 @@ public final class BedrockSettings {
     public BedrockSettings() {
         final SettingGroup group = ViaFabricPlus.api().settings().register("bedrock");
         group.register("account", new ActionSetting(Component.translatable("bedrock_settings.viafabricplus.account"), BedrockSettings::accountName, () -> ViaFabricPlusBedrock.impl().account().login()));
+        group.register("dressing_room", new ActionSetting(Component.translatable("bedrock_settings.viafabricplus.dressing_room"),
+            () -> Component.translatable("bedrock_settings.viafabricplus.dressing_room.open"),
+            () -> new BedrockDressingRoomScreen().open(Minecraft.getInstance().gui.screen())));
         this.replaceDefaultPort = group.registerBoolean("replace_default_port", true);
         this.experimentalFeatures = group.registerBoolean("experimental_features", true);
     }

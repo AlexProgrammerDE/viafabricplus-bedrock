@@ -14,6 +14,16 @@ to the mod.
 Log in once. The same account is used for every online mode Bedrock
 server. `Bedrock Realms` and `Bedrock Friends` in the ViaFabricPlus screen stay disabled until an account is set.
 
+### Dressing Room
+
+Open the `Bedrock` settings tab and select `Dressing Room`. Choose Steve or Alex, or import a custom skin PNG.
+For a custom skin, choose the wide or slim model. You can also import or remove a cape PNG.
+The screen previews the selected skin and cape. Your choice takes effect the next time you join a Bedrock world.
+
+Skin PNGs must be square, from 64 × 64 to 1024 × 1024 pixels. Cape PNGs must be twice as wide as they are tall,
+from 64 × 32 to 1024 × 512 pixels. The Dressing Room keeps one imported skin per account.
+It saves the appearance separately for each Bedrock account and for offline play.
+
 Open `Bedrock Friends` to see your Xbox friends and their online status. The `Requests` tab lets you accept, decline,
 or cancel friend requests. Use `Find players` to search by Gamertag and send a request. Select a player and click
 `Profile` to see their Xbox details, or `Remove friend` to remove them.
