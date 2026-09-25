@@ -36,6 +36,7 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Interaction;
+import net.raphimc.viabedrock.api.model.entity.CustomEntity;
 import net.raphimc.viabedrock.api.util.StringUtil;
 import net.raphimc.viabedrock.protocol.storage.ResourcePackStorage;
 import org.cube.converter.model.impl.bedrock.BedrockGeometryModel;
@@ -44,6 +45,7 @@ import org.cube.converter.model.impl.bedrock.BedrockGeometryModel;
 public final class BedrockEntityRenderer extends EntityRenderer<Interaction, BedrockEntityRenderer.State> {
 
     private final Map<String, Model<EntityRenderState>> models = new HashMap<>();
+    private final Map<List<CustomEntity.EvaluatedModel>, List<RenderedModel>> resolvedModelSets = new HashMap<>();
     private ResourcePackStorage currentPacks;
 
     public BedrockEntityRenderer(final EntityRendererProvider.Context context) {
@@ -69,9 +71,12 @@ public final class BedrockEntityRenderer extends EntityRenderer<Interaction, Bed
         state.models = List.of();
         final UserConnection connection = ViaFabricPlus.api().userConnection();
         if (connection == null || !connection.has(ResourcePackStorage.class)) {
+            this.currentPacks = null;
+            this.models.clear();
+            this.resolvedModelSets.clear();
             return;
         }
-        final List<net.raphimc.viabedrock.api.model.entity.CustomEntity.EvaluatedModel> evaluatedModels = CustomEntityRenderStore.get(entity.getUUID());
+        final List<CustomEntity.EvaluatedModel> evaluatedModels = CustomEntityRenderStore.get(entity.getUUID());
         if (evaluatedModels == null) {
             return;
         }
@@ -79,7 +84,16 @@ public final class BedrockEntityRenderer extends EntityRenderer<Interaction, Bed
         if (this.currentPacks != packs) {
             this.currentPacks = packs;
             this.models.clear();
+            this.resolvedModelSets.clear();
         }
+        state.models = this.resolvedModelSets.computeIfAbsent(evaluatedModels, models -> this.resolveModels(models, packs));
+        state.yaw = entity.getYRot();
+    }
+
+    private List<RenderedModel> resolveModels(
+        final List<CustomEntity.EvaluatedModel> evaluatedModels,
+        final ResourcePackStorage packs
+    ) {
         final List<RenderedModel> resolved = new ArrayList<>();
         for (var evaluated : evaluatedModels) {
             final BedrockGeometryModel geometry = packs.getModels().entityModels().get(evaluated.geometryValue());
@@ -90,8 +104,7 @@ public final class BedrockEntityRenderer extends EntityRenderer<Interaction, Bed
             final String path = "textures/item/entities/" + StringUtil.makeIdentifierValueSafe(evaluated.textureValue().replace("textures/", "")) + ".png";
             resolved.add(new RenderedModel(model, Identifier.fromNamespaceAndPath("viabedrock", path)));
         }
-        state.models = List.copyOf(resolved);
-        state.yaw = entity.getYRot();
+        return List.copyOf(resolved);
     }
 
     @Override

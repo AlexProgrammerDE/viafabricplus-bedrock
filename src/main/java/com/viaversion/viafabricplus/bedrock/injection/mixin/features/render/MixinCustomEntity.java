@@ -39,7 +39,9 @@ public abstract class MixinCustomEntity {
 
     @Inject(method = "evaluateRenderControllerChange", at = @At("RETURN"))
     private void publishRenderModels(final CallbackInfoReturnable<Boolean> cir) {
-        CustomEntityRenderStore.update(((CustomEntity) (Object) this).javaUuid(), this.models);
+        if (cir.getReturnValueZ()) {
+            CustomEntityRenderStore.update(((CustomEntity) (Object) this).javaUuid(), this.models);
+        }
     }
 
     @Inject(method = "spawn", at = @At("HEAD"), cancellable = true)

@@ -83,6 +83,7 @@ public final class BedrockGeometry {
             final String name = player ? playerPartName(bone.definition.getName()) : bone.definition.getName();
             final Bone parent = bones.get(bone.definition.getParent());
             final boolean directPlayerPart = player && (PLAYER_PARTS.contains(name) || PLAYER_OVERLAYS.containsKey(name));
+            // Bedrock pivots are absolute; ModelPart pivots are relative to their parent.
             final float parentX = directPlayerPart || parent == null ? 0 : parent.definition.getPivot().getX();
             final float parentY = directPlayerPart || parent == null ? 24 : parent.definition.getPivot().getY();
             final float parentZ = directPlayerPart || parent == null ? 0 : parent.definition.getPivot().getZ();
@@ -133,6 +134,7 @@ public final class BedrockGeometry {
         final float pivotX = cube.getPivot().getX();
         final float pivotY = cube.getPivot().getY();
         final float pivotZ = cube.getPivot().getZ();
+        // Keep vertices relative to the cube pivot so its rotation uses the Bedrock pivot.
         final float x = cube.getPosition().getX() - pivotX;
         final float y = pivotY - cube.getPosition().getY() - cube.getSize().getY();
         final float z = cube.getPosition().getZ() - pivotZ;
